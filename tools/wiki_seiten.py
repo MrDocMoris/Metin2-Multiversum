@@ -30,7 +30,9 @@ GRUPPEN = {
     'Weltkarte - Alter Kontinent': 'Maps', 'Weltkarte - Neuer Kontinent': 'Maps',
 }
 # Von diesen Gruppen werden auch die verlinkten Unterseiten geholt (z. B. alle Quests, Truhen, Fertigkeiten)
-TIEFER = {'Systeme', 'Übersichten', 'Fähigkeiten', 'Ausrüstung', 'Klassen'}
+# … mit Höchstzahl je Gruppe, in dieser Reihenfolge (damit Systeme & Quests nicht von Waffenlisten verdrängt werden)
+TIEFER = {'Systeme': 150, 'Übersichten': 260, 'Fähigkeiten': 60, 'Ausrüstung': 80, 'Klassen': 90, 'Maps': 0}
+EXTRA = [('Biologe', 'Übersichten'), ('Power-Mount-System', 'Systeme'), ('Inventar', 'Allgemein')]
 SKIP = re.compile(r'^(Spezial|Kategorie|Datei|File|Vorlage|Benutzer|Hilfe|MediaWiki|metin2|Diskussion)[: ]|^(GameMaster|Team|Wie_helfe|Botjagd|Bots_und_Cheater)', re.I)
 MAX_SEITEN = 700
 
@@ -146,42 +148,50 @@ def main():
     wj = os.path.join(ROOT, 'daten', 'wiki.json')
     if os.path.exists(wj):  # Monster & Metins gibt es schon strukturiert
         skip = {e['p'] for e in json.load(open(wj, encoding='utf-8')).get('eintraege', [])}
-    queue = hauptseite()
-    print(f'Hauptseite: {len(queue)} Themen-Seiten')
+    first = hauptseite() + EXTRA
+    print(f'Hauptseite: {len(first)} Themen-Seiten')
     seen, index = set(), []
+    deeper = {g: [] for g in TIEFER}
     os.makedirs(OUT_DIR, exist_ok=True)
-    i = 0
-    while i < len(queue) and len(index) < limit:
-        page, group = queue[i]
-        i += 1
-        if page in seen or page in skip:
-            continue
+
+    def take(page, group, collect):
+        if page in seen or page in skip or len(index) >= limit:
+            return
         seen.add(page)
         time.sleep(PAUSE)
         soup = get(page)
         if not soup:
-            continue
+            return
         c = soup.find(id='mw-content-text')
         if not c:
-            continue
+            return
         title = clean_text((soup.find(id='firstHeading') or soup.find('h1') or soup.title).get_text()).replace(' – Metin2 Wiki', '')
-        # Unterseiten merken (bevor das HTML bereinigt wird)
-        if group in TIEFER and len(queue) < limit * 3:
+        if collect and group in deeper:
             for a in c.find_all('a'):
                 p = page_of(a.get('href'))
-                if p and p not in seen and p not in skip and a.get_text(strip=True):
-                    queue.append((p, group))
+                if p and p not in skip and a.get_text(strip=True) and p not in deeper[group]:
+                    deeper[group].append(p)
         heads = [clean_text(h.get_text(' ')) for h in c.find_all(['h2', 'h3'])][:25]
         html = clean_html(c, title)
         text = clean_text(BeautifulSoup(html, 'html.parser').get_text(' '))
         if len(text) < 40:
-            continue
+            return
         k = pid(page)
         with open(os.path.join(OUT_DIR, k + '.json'), 'w', encoding='utf-8') as f:
             json.dump({'t': title, 'p': page, 'g': group, 'html': html}, f, ensure_ascii=False, separators=(',', ':'))
         index.append({'id': k, 't': title, 'p': page, 'g': group, 'h': heads, 's': text[:220], 'n': len(html)})
         if len(index) % 50 == 0:
             print(f'{len(index)} Seiten … {title}')
+
+    for page, group in first:          # 1) alle Themen der Hauptseite
+        take(page, group, True)
+    for group, cap in TIEFER.items():  # 2) verlinkte Unterseiten, je Gruppe begrenzt
+        n0 = len(index)
+        for page in deeper[group]:
+            if len(index) - n0 >= cap:
+                break
+            take(page, group, False)
+        print(f'{group}: {len(index) - n0} Unterseiten')
     if len(index) < 30:
         raise SystemExit('Zu wenig Seiten – Wiki-Aufbau geändert? Alte Daten bleiben.')
     # alte Seiten-Dateien entfernen, die nicht mehr vorkommen
