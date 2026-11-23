@@ -11,11 +11,11 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           mkdir -p dbg
-          B=https://board.de.metin2.gameforge.com/index.php
+          B=https://de-wiki.metin2.gameforge.com/index.php
           i=0
-          for u in "$B?thread/56068-wartungsarbeiten/" "$B?thread/56068-wartungsarbeiten/&pageNo=9999" "$B?thread/134696-update-26-2-aamon-s-legacy/"; do
+          for u in "$B/Hauptseite" "$B/Alchemie" "$B/Drachenstein" "$B/Kategorie:Quests" "$B/Biologe" "$B?title=Spezial:Alle_Seiten&hideredirects=1"; do
             i=$((i+1)); curl -sL -A "Mozilla/5.0 (Metin2-Multiversum)" "$u" -o "dbg/$i.html" -w "$i %{http_code} %{url_effective}\n"; sleep 2
           done
           ls -la dbg
           git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
-          git add dbg; git commit -m "debug html 3"; git push
+          git add dbg; git commit -m "debug html 4"; git push
