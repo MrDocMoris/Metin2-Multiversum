@@ -1,0 +1,40 @@
+name: Metin2-Wiki-Daten holen
+
+on:
+  schedule:
+    - cron: "23 3 1,15 * *"   # am 1. und 15. jedes Monats
+  push:
+    branches: [main]
+    paths:
+      - tools/wiki.py
+      - .github/workflows/wiki.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki
+  cancel-in-progress: true
+
+jobs:
+  wiki:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests beautifulsoup4
+      - name: Monster, Metins und Drops aus dem Wiki lesen
+        run: python tools/wiki.py
+      - name: Speichern, falls geändert
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add daten/
+          if git diff --cached --quiet; then echo "Keine Änderungen"; exit 0; fi
+          git commit -m "Wiki-Daten aktualisiert"
+          git pull --rebase origin main
+          git push

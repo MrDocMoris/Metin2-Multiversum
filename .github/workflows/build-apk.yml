@@ -1,0 +1,137 @@
+name: Android-App bauen
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - metin2.html
+      - assets/icon.svg
+      - .github/workflows/build-apk.yml
+      - daten/wiki.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Signatur-Schluessel (wird beim ersten Mal angelegt)
+        run: |
+          if [ ! -f signing/debug.keystore ]; then
+            mkdir -p signing
+            keytool -genkeypair -keystore signing/debug.keystore -storepass android -keypass android \
+              -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Metin2Multiversum,O=Metin2Multiversum,C=DE"
+            git config user.name "github-actions"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add signing/debug.keystore
+            git commit -m "Signatur-Schluessel angelegt"
+            git pull --rebase origin main
+            git push
+          fi
+
+      - name: Projekt vorbereiten
+        run: |
+          mkdir -p build/www
+          cd build
+          npm init -y > /dev/null
+          npm i --no-audit --no-fund @capacitor/core@7 @capacitor/android@7 @capacitor/browser@7 @capacitor/app@7 @capacitor/local-notifications@7 @capacitor/filesystem@7
+          npm i --no-audit --no-fund -D @capacitor/cli@7
+          cp ../metin2.html www/index.html
+          sed -i 's/const APP_BUILD = 0;/const APP_BUILD = ${{ github.run_number }};/' www/index.html
+          grep -q 'const APP_BUILD = ${{ github.run_number }};' www/index.html
+          cp node_modules/@capacitor/core/dist/capacitor.js www/capacitor.js
+          cp ../assets/icon.svg www/icon.svg
+          if [ -f ../daten/wiki.json ]; then cp ../daten/wiki.json www/wiki.json; fi
+          echo '{"appId":"de.mrdocmoris.metin2","appName":"Metin2-Multiversum","webDir":"www"}' > capacitor.config.json
+          npx cap add android
+          # Berechtigungen: Erinnerungen (genaue Uhrzeit) und Sicherung in "Dokumente" (ältere Android-Versionen)
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's#<application#<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />\n    <application android:requestLegacyExternalStorage="true"#' $M
+          grep -q SCHEDULE_EXACT_ALARM $M && grep -q requestLegacyExternalStorage $M
+          sed -i 's/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName "1.0"/versionName "1.${{ github.run_number }}"/' android/app/build.gradle
+          # Immer mit dem festen Schlüssel aus dem Repo signieren (sonst scheitern Updates)
+          cat >> android/app/build.gradle << 'GRADLE'
+
+          android {
+              signingConfigs {
+                  metin {
+                      storeFile file(System.getenv("METIN_KEYSTORE"))
+                      storePassword "android"
+                      keyAlias "androiddebugkey"
+                      keyPassword "android"
+                  }
+              }
+              buildTypes {
+                  debug { signingConfig signingConfigs.metin }
+              }
+          }
+          GRADLE
+
+      - name: App-Icon erzeugen
+        continue-on-error: true
+        run: |
+          cd build
+          mkdir -p assets
+          cp ../assets/icon.svg assets/icon.svg
+          npm i --no-audit --no-fund sharp @capacitor/assets
+          node -e "const s=require('sharp');(async()=>{await s('assets/icon.svg').resize(1024,1024).png().toFile('assets/icon-only.png');await s('assets/icon.svg').resize(1024,1024).png().toFile('assets/icon-foreground.png');await s({create:{width:1024,height:1024,channels:3,background:'#07061a'}}).png().toFile('assets/icon-background.png');})()"
+          npx @capacitor/assets generate --android --iconBackgroundColor '#07061a' --iconBackgroundColorDark '#07061a' --splashBackgroundColor '#0b0a1a' --splashBackgroundColorDark '#0b0a1a'
+
+      - name: APK bauen
+        run: |
+          cd build
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          METIN_KEYSTORE="$GITHUB_WORKSPACE/signing/debug.keystore" ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/Metin2-Multiversum.apk"
+          # Prüfen: APK muss mit dem Schlüssel aus dem Repo signiert sein
+          AS=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)apksigner
+          A=$("$AS" verify --print-certs "$GITHUB_WORKSPACE/Metin2-Multiversum.apk" | grep -i "SHA-256 digest" | head -1 | awk '{print $NF}' | tr -d ':' | tr 'a-f' 'A-F')
+          K=$(keytool -list -v -keystore "$GITHUB_WORKSPACE/signing/debug.keystore" -storepass android -alias androiddebugkey | grep -i "SHA256:" | head -1 | awk '{print $NF}' | tr -d ':' | tr 'a-f' 'A-F')
+          echo "APK: $A"; echo "Key: $K"
+          [ -n "$A" ] && [ "$A" = "$K" ] || { echo "FEHLER: falsche Signatur"; exit 1; }
+
+      - name: APK veroeffentlichen
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: Metin2-Multiversum 1.${{ github.run_number }}
+          body: ${{ github.event.head_commit.message }}
+          files: Metin2-Multiversum.apk
+
+      - name: Update-Info fuer die App (app/version.json)
+        env:
+          NOTES: ${{ github.event.head_commit.message }}
+        run: |
+          mkdir -p app
+          N=${{ github.run_number }}
+          SIZE=$(stat -c %s Metin2-Multiversum.apk)
+          URL="https://github.com/${{ github.repository }}/releases/download/v1.$N/Metin2-Multiversum.apk"
+          FIRST=$(printf '%s' "$NOTES" | head -1)
+          jq -n --argjson b "$N" --arg v "1.$N" --argjson s "$SIZE" --arg a "$URL" --arg n "$FIRST" \
+            '{build:$b, version:$v, size:$s, apk:$a, notes:$n}' > app/version.json
+          cat app/version.json
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add app/version.json
+          git commit -m "Version 1.$N veroeffentlicht"
+          git pull --rebase origin main
+          git push

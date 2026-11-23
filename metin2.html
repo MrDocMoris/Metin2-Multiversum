@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Metin2-Multiversum – dein Begleiter für Ruby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="capacitor.js" onerror="this.remove()"></script>
+<style>
+:root{
+  --bg:#0b0a1a; --panel:#15122c; --panel2:#201c3f; --line:#2f2a58; --text:#efecff; --mute:#9c95c8;
+  --grad:linear-gradient(120deg,#6fe3ff 0%,#a78bff 55%,#e59bff 100%); --glow:0 0 18px rgba(130,110,255,.45);
+  --acc:#7fe3ff; --ok:#3fd68a; --bad:#ff5c6c;
+  
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:15px/1.4 "Space Grotesk",system-ui,sans-serif}
+body{background:radial-gradient(ellipse 120% 60% at 50% -10%,rgba(98,70,230,.35),transparent 60%),radial-gradient(ellipse 80% 50% at 100% 100%,rgba(70,200,255,.10),transparent 60%),var(--bg);background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.55;background-image:radial-gradient(1px 1px at 12% 18%,#fff,transparent),radial-gradient(1px 1px at 78% 12%,#fff,transparent),radial-gradient(1.5px 1.5px at 34% 72%,#cfc6ff,transparent),radial-gradient(1px 1px at 88% 64%,#fff,transparent),radial-gradient(1px 1px at 55% 38%,#bfefff,transparent),radial-gradient(1.5px 1.5px at 6% 88%,#fff,transparent),radial-gradient(1px 1px at 66% 90%,#fff,transparent),radial-gradient(1px 1px at 22% 46%,#fff,transparent),radial-gradient(1px 1px at 93% 32%,#e3d9ff,transparent),radial-gradient(1px 1px at 44% 8%,#fff,transparent)}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.app{display:flex;flex-direction:column;height:100%}
+main{flex:1;position:relative;overflow:hidden}
+.view{position:absolute;inset:0;display:none;overflow-y:auto}
+.view.on{display:block}
+.pad{padding:calc(14px + var(--safe-t)) 14px 96px}
+/* Navigation unten (wie TCG Multiversum) */
+nav{display:flex;background:rgba(17,14,38,.92);backdrop-filter:blur(10px);border-top:1px solid transparent;border-image:var(--grad) 1;padding-bottom:var(--safe-b);position:relative;z-index:5}
+nav button{flex:1;min-width:0;padding:10px 0 8px;color:var(--mute);font-size:11px;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+nav button svg{width:22px;height:22px}
+nav button.on{color:var(--acc);text-shadow:0 0 12px rgba(127,227,255,.6)}
+nav button.on svg{filter:drop-shadow(0 0 6px rgba(127,227,255,.7))}
+nav .badge{position:absolute;top:4px;left:calc(50% + 6px);min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--grad);color:#0b0a1a;font-size:10px;font-weight:800;line-height:16px}
+nav .badge:empty{display:none}
+/* Listen */
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:14px 12px 12px;border-radius:18px;background:linear-gradient(160deg,rgba(40,33,84,.9),rgba(22,18,46,.9));border:1px solid var(--line);position:relative;overflow:hidden;transition:transform .12s;min-width:0}
+.tile:active{transform:scale(.96)}
+.tile::after{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(rgba(167,139,255,.22),transparent 70%)}
+.tile .ti{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 16px rgba(0,0,0,.35);margin-bottom:6px}
+.tile .tt{font-weight:700;font-size:16px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .ts{font-size:12px;color:var(--mute);line-height:1.3}
+.tile.new{border-style:dashed;align-items:center;justify-content:center;color:var(--mute);min-height:128px}
+.tile.new .ti{background:var(--panel2);color:var(--acc);border:1px solid var(--line)}
+.lhead{display:flex;align-items:center;gap:10px;margin:4px 0 14px}
+.lhead .lic{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex:none;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.lhead h1{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.addrow{display:flex;gap:8px;margin-bottom:12px;position:sticky;top:0;z-index:2}
+.addrow input{flex:1;font-size:16px;padding:12px 13px;border-radius:12px}
+.addrow button{width:48px;border-radius:12px;background:var(--grad);color:#0b0a1a;display:grid;place-items:center;box-shadow:var(--glow);flex:none}
+.addrow button svg{width:24px;height:24px}
+.li{display:flex;align-items:center;gap:10px;background:rgba(27,23,56,.82);border:1px solid var(--line);border-radius:13px;padding:4px 6px 4px 4px;margin-bottom:6px}
+.li .ck{width:42px;height:42px;display:grid;place-items:center;flex:none}
+.li .ck i{width:24px;height:24px;border-radius:50%;border:2px solid var(--mute);display:grid;place-items:center;transition:all .15s}
+.li.done .ck i{background:var(--ok);border-color:var(--ok)}
+.li.done .ck i::after{content:"";width:10px;height:5px;border:2.5px solid #0b2416;border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}
+.li .tx{flex:1;min-width:0;text-align:left;padding:9px 4px;word-break:break-word}
+.li .tx small{display:block;color:var(--mute);font-size:11px}
+.li.done .tx{color:var(--mute);text-decoration:line-through}
+.li .who{width:8px;height:8px;border-radius:50%;flex:none;margin-right:6px}
+.dhead{display:flex;align-items:center;justify-content:space-between}
+.icons{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.icons button{aspect-ratio:1;border-radius:12px;background:var(--panel2);border:1px solid var(--line);font-size:22px}
+.icons button.on{border-color:var(--acc);box-shadow:var(--glow)}
+.cols{display:flex;gap:8px;flex-wrap:wrap}
+.cols button{width:38px;height:38px;border-radius:50%;border:2px solid transparent}
+.cols button.on{border-color:#fff;box-shadow:var(--glow)}
+h1{font-size:24px;margin:0;background:linear-gradient(90deg,#ffffff,#c9bcff 60%,#8fe8ff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.01em}
+h2{font-size:19px;margin:0 0 10px}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--mute);margin:18px 0 8px;font-weight:500}
+.muted{color:var(--mute);font-size:13px}
+.empty{color:var(--mute);text-align:center;padding:18px 10px;font-size:14px}
+/* Kopf */
+.hero{display:flex;align-items:center;gap:14px;margin:6px 0 14px}
+.hlogo{width:62px;height:62px;border-radius:17px;box-shadow:0 0 24px rgba(130,110,255,.55),0 0 0 1px rgba(167,139,255,.5);animation:hfloat 5s ease-in-out infinite;flex:none}
+@keyframes hfloat{50%{transform:translateY(-4px) rotate(-2deg)}}
+.hero .sub{color:var(--mute);font-size:13px;margin-top:2px}
+.gearbtn{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--panel2);border:1px solid var(--line);color:var(--acc);box-shadow:var(--glow);flex:none}
+.gearbtn svg{width:22px;height:22px;transition:transform .5s}
+.gearbtn:active svg{transform:rotate(90deg)}
+.hstats{display:flex;gap:8px;margin-bottom:14px}
+.hstats div{flex:1;min-width:0;background:rgba(27,23,56,.82);border:1px solid var(--line);border-radius:14px;padding:10px 8px;text-align:center}
+.hstats b{display:block;font-size:19px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hstats span{font-size:11px;color:var(--mute)}
+/* Monatskarte */
+.card{border-radius:18px;background:linear-gradient(160deg,rgba(40,33,84,.9),rgba(22,18,46,.9));border:1px solid var(--line);padding:10px 10px 12px;position:relative;overflow:hidden}
+.card::after{content:"";position:absolute;right:-40px;top:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(rgba(167,139,255,.22),transparent 70%);pointer-events:none}
+.mhead{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.mhead .t{flex:1;text-align:center;font-weight:700;font-size:18px}
+.iconbtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(22,24,31,.6);border:1px solid var(--line)}
+.iconbtn svg{width:19px;height:19px}
+.chip{padding:7px 12px;border-radius:99px;background:rgba(22,24,31,.85);border:1px solid var(--line);font-size:13px;font-weight:500}
+.chip.on{background:var(--grad);color:#0b0a1a;border-color:transparent;box-shadow:var(--glow)}
+.wd,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.wd span{text-align:center;font-size:11px;color:var(--mute);padding:4px 0}
+.wd span:nth-child(n+6){color:#c9a6ff}
+.day{aspect-ratio:1/1.05;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:15px;position:relative;transition:transform .1s}
+.day:active{transform:scale(.92)}
+.day.other{opacity:.28}
+.day.today{box-shadow:inset 0 0 0 1.5px var(--acc);color:var(--acc);font-weight:700}
+/* Countdowns & Hinweise */
+.cds{display:flex;gap:8px;overflow-x:auto;margin:-4px -14px 14px;padding:4px 14px;scrollbar-width:none}
+.cds::-webkit-scrollbar{display:none}
+.cd{flex:none;min-width:130px;max-width:170px;text-align:left;border-radius:16px;padding:10px 12px;background:linear-gradient(150deg,rgba(111,227,255,.16),rgba(229,155,255,.16));border:1px solid rgba(167,139,255,.45);box-shadow:0 0 14px rgba(130,110,255,.25)}
+.cd b{display:block;font-size:24px;line-height:1.1;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cd span{display:block;font-size:12px;color:var(--mute)}
+.cd .t{color:var(--text);font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.hints{display:flex;flex-direction:column;gap:6px;margin:-4px 0 14px}
+.hint{display:flex;align-items:center;gap:10px;text-align:left;padding:9px 12px;border-radius:12px;background:rgba(27,23,56,.82);border:1px solid var(--line);font-size:14px}
+.hint.warn{border-color:rgba(255,177,61,.5);background:rgba(255,177,61,.10)}
+.hint.bad{border-color:rgba(255,92,108,.5);background:rgba(255,92,108,.10)}
+.spec.waste{background:rgba(160,160,180,.10)}
+.spec.dog{background:rgba(255,177,61,.10);border-color:rgba(255,177,61,.35)}
+/* Essen */
+.wnav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.wnav .t{flex:1;text-align:center;font-weight:700}
+.meal{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:rgba(27,23,56,.82);border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin-bottom:7px}
+.meal .dd{width:44px;flex:none;text-align:center;line-height:1.15}
+.meal .dd b{display:block;font-size:18px}
+.meal .dd span{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+.meal.today{border-color:var(--acc);box-shadow:0 0 12px rgba(127,227,255,.25)}
+.meal .mn{flex:1;min-width:0}
+.meal .mn b{display:block}
+.meal .mn small{display:block;color:var(--mute);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meal .mn .plan{color:var(--mute)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+/* Pinnwand */
+.notes{columns:2;column-gap:10px}
+.notec{break-inside:avoid;display:block;width:100%;text-align:left;margin-bottom:10px;border-radius:14px;padding:11px 12px;border:1px solid var(--line);position:relative;overflow:hidden;background:rgba(27,23,56,.9)}
+.notec::before{content:"";position:absolute;left:0;top:0;right:0;height:4px}
+.notec b{display:block;margin-bottom:4px}
+.notec p{margin:0;font-size:13px;color:#d9d3ff;white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:hidden}
+.notec small{display:block;margin-top:6px;font-size:11px;color:var(--mute)}
+/* Hund & Müll */
+.care{display:flex;align-items:center;gap:10px;background:rgba(27,23,56,.82);border:1px solid var(--line);border-radius:14px;padding:10px 10px 10px 12px;margin-bottom:8px}
+.care .ic{font-size:24px;width:32px;text-align:center;flex:none}
+.care .cm{flex:1;min-width:0;text-align:left}
+.care .cm b{display:block}
+.care .cm small{display:block;font-size:12px;color:var(--mute)}
+.care .st{font-size:12px;font-weight:700}
+.care .ok{flex:none;padding:8px 10px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-size:12px;color:var(--ok)}
+.st.bad{color:var(--bad)} .st.warn{color:#ffb13d} .st.good{color:var(--ok)}
+.bin{width:14px;height:14px;border-radius:4px;display:inline-block;vertical-align:-2px;margin-right:6px}
+.dots i.w{border-radius:1.5px}
+.subhead{display:flex;align-items:center;gap:10px;margin:4px 0 14px}
+.subhead h1{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.day .mb{position:absolute;left:-2px;right:-2px;height:4px;pointer-events:none}
+.day.fer{background:rgba(125,255,181,.17)}
+.day.hol>span:first-child{color:#ff9ab0;font-weight:700}
+.day.sel.hol>span:first-child{color:#7a0b2c}
+.legend{display:flex;gap:14px;justify-content:center;font-size:11px;color:var(--mute);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.spec{display:flex;align-items:center;gap:10px;border-radius:12px;padding:9px 12px;margin-bottom:8px;font-size:14px;border:1px solid var(--line)}
+.spec.hol{background:rgba(255,154,176,.12);border-color:rgba(255,154,176,.35)}
+.spec.fer{background:rgba(125,255,181,.09);border-color:rgba(125,255,181,.3)}
+.spec small{display:block;color:var(--mute);font-size:12px}
+.day.sel{background:var(--grad);color:#0b0a1a;font-weight:700;box-shadow:var(--glow)}
+.dots{display:flex;gap:3px;height:5px}
+.dots i{width:5px;height:5px;border-radius:50%}
+.day.sel .dots i{box-shadow:0 0 0 1px rgba(11,10,26,.6)}
+/* Termine */
+.ev{display:flex;gap:10px;align-items:stretch;background:rgba(27,23,56,.82);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;width:100%;text-align:left}
+.ev:active{transform:scale(.98)}
+.ev .bar{width:4px;border-radius:4px;flex:none}
+.ev .tm{width:58px;flex:none;font-weight:700;font-size:14px}
+.ev .tm small{display:block;color:var(--mute);font-weight:400;font-size:12px}
+.ev .mid{flex:1;min-width:0}
+.ev .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis}
+.ev .meta{font-size:12px;color:var(--mute);margin-top:1px}
+.ev .note{font-size:13px;color:#cfc8f5;margin-top:3px;white-space:pre-wrap}
+.ev .dt{font-size:12px;color:var(--acc);margin-bottom:1px}
+#fab{position:fixed;right:18px;bottom:calc(74px + var(--safe-b));width:62px;height:62px;border-radius:50%;background:var(--grad);color:#0b0a1a;box-shadow:0 0 0 3px rgba(167,139,255,.35),0 0 26px rgba(127,227,255,.55);display:grid;place-items:center;z-index:10;transition:transform .1s}
+#fab:active{transform:scale(.92)}
+#fab svg{width:30px;height:30px}
+/* Sheet */
+#sheet{position:fixed;left:0;right:0;bottom:0;max-height:90%;background:var(--panel);border-radius:18px 18px 0 0;border-top:1px solid var(--line);
+  transform:translateY(105%);transition:transform .25s ease;z-index:20;overflow-y:auto;padding:8px 16px calc(18px + var(--safe-b))}
+#sheet.on{transform:none}
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:19;display:none}
+#scrim.on{display:block}
+.grab{width:40px;height:4px;background:var(--line);border-radius:4px;margin:2px auto 12px}
+label.f{display:block;font-size:12px;color:var(--mute);margin:10px 0 4px}
+input[type=text],input[type=date],input[type=time],select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 11px;outline:none;color-scheme:dark}
+input:focus,select:focus,textarea:focus{border-color:#7a6cff}
+textarea{min-height:64px;resize:vertical}
+.two{display:flex;gap:8px}.two>div{flex:1;min-width:0}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:0;padding:9px 6px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg button.on{background:var(--grad);color:#0b0a1a;border-color:transparent;font-weight:700}
+.sw{display:flex;align-items:center;justify-content:space-between;padding:12px 0 2px}
+.tog{width:46px;height:26px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);position:relative;flex:none;transition:background .2s}
+.tog::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:var(--mute);transition:transform .2s,background .2s}
+.tog.on{background:rgba(127,227,255,.25);border-color:var(--acc)}
+.tog.on::after{transform:translateX(20px);background:var(--acc)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btn{flex:1;min-width:120px;padding:12px;border-radius:11px;background:var(--panel2);border:1px solid var(--line);font-weight:500;text-align:center;text-decoration:none;color:var(--text)}
+.btn.pri{background:var(--grad);color:#0b0a1a;border-color:transparent;font-weight:700;box-shadow:var(--glow)}
+.btn.del{color:var(--bad);border-color:rgba(255,92,108,.4)}
+.set-row{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)}
+.set-row input[type=text]{flex:1}
+.set-row input[type=color]{width:42px;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:3px;flex:none}
+#toast{position:fixed;z-index:50;left:50%;top:calc(14px + var(--safe-t));transform:translate(-50%,-150%);background:var(--panel2);border:1px solid var(--line);
+  padding:9px 16px;border-radius:99px;transition:transform .25s;font-size:14px;max-width:90%;text-align:center}
+#toast.on{transform:translate(-50%,0)}
+
+/* ===== Metin2-Multiversum: Ergänzungen ===== */
+:root{--gold:#ffcf6b;--ruby:#ff5c8a}
+.hstats b.g{background:linear-gradient(90deg,#ffe29a,#ffb13d);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sbox{display:flex;gap:8px;margin-bottom:10px;position:sticky;top:0;z-index:2;padding-top:2px;background:linear-gradient(var(--bg) 70%,transparent)}
+.sbox input{flex:1;font-size:16px;padding:12px 13px;border-radius:12px;width:100%;background:var(--panel2);border:1px solid var(--line);outline:none}
+.row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:rgba(27,23,56,.82);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:7px}
+.row:active{transform:scale(.985)}
+.row .ic{font-size:22px;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--panel2);flex:none}
+.row .mid{flex:1;min-width:0}
+.row .mid b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .mid small{display:block;color:var(--mute);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .rt{text-align:right;flex:none;font-size:13px}
+.row .rt b{display:block;font-size:15px}
+.row .rt small{color:var(--mute);font-size:11px}
+.up{color:var(--bad)} .down{color:var(--ok)}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;vertical-align:1px}
+.tag.cheap{background:rgba(63,214,138,.18);color:var(--ok)}
+.tag.dear{background:rgba(255,92,108,.16);color:var(--bad)}
+.tag.lv{background:var(--panel2);color:var(--acc);border:1px solid var(--line)}
+.tag.metin{background:rgba(255,207,107,.15);color:var(--gold)}
+/* Farm-Session */
+.sess{border-radius:18px;padding:14px;margin-bottom:14px;background:linear-gradient(150deg,rgba(255,207,107,.14),rgba(167,139,255,.16));border:1px solid rgba(255,207,107,.45);box-shadow:0 0 18px rgba(255,177,61,.18)}
+.sess .top{display:flex;align-items:center;gap:10px}
+.sess .top b{font-size:17px}
+.sess .top small{display:block;color:var(--mute);font-size:12px}
+.kills{display:flex;align-items:center;gap:10px;margin:12px 0 4px}
+.kills .n{flex:1;text-align:center;font-size:34px;font-weight:700;background:linear-gradient(90deg,#ffe29a,#ffb13d);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+.kills .n small{display:block;font-size:11px;color:var(--mute);-webkit-text-fill-color:var(--mute);font-weight:400;margin-top:4px}
+.kbtn{min-width:74px;height:60px;border-radius:16px;background:var(--grad);color:#0b0a1a;font-weight:800;font-size:20px;box-shadow:var(--glow)}
+.kbtn.s{min-width:54px;background:var(--panel2);color:var(--text);border:1px solid var(--line);box-shadow:none;font-size:15px}
+.kbtn:active{transform:scale(.93)}
+.dchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.dchips button{padding:7px 11px;border-radius:99px;background:rgba(22,24,31,.85);border:1px solid var(--line);font-size:13px}
+.dchips button b{color:var(--gold);margin-left:4px}
+.dchips button:active{transform:scale(.94)}
+/* Diagramm */
+.chart{width:100%;height:170px;display:block}
+.chart .ln{fill:none;stroke:url(#cg);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.chart .ar{fill:url(#ca);opacity:.5}
+.chart text{fill:var(--mute);font-size:10px;font-family:inherit}
+.chart .avg{stroke:var(--mute);stroke-dasharray:4 4;stroke-width:1}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.kv div{background:rgba(27,23,56,.82);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+.kv span{display:block;font-size:11px;color:var(--mute)}
+.kv b{font-size:15px}
+.dcat{margin:12px 0 6px;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.1em}
+.ilist{display:flex;flex-wrap:wrap;gap:6px}
+.ilist button{padding:7px 11px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-size:13px;text-align:left}
+.ilist button.have{border-color:rgba(255,207,107,.6);color:var(--gold)}
+.sugg{background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-top:4px;max-height:200px;overflow-y:auto;display:none}
+.sugg.on{display:block}
+.sugg button{display:block;width:100%;text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);font-size:14px}
+.sugg button small{color:var(--mute);margin-left:6px}
+.daysel{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.daysel button{padding:9px 0;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-size:13px}
+.daysel button.on{background:var(--grad);color:#0b0a1a;font-weight:700;border-color:transparent}
+.ev.live{border-color:var(--ok);box-shadow:0 0 14px rgba(63,214,138,.3)}
+.ev .ic{font-size:24px;width:34px;text-align:center;flex:none;align-self:center}
+.cd.live{border-color:var(--ok);background:linear-gradient(150deg,rgba(63,214,138,.2),rgba(127,227,255,.12))}
+.cd .ic{float:right;font-size:20px}
+.bar2{height:6px;border-radius:6px;background:var(--panel2);overflow:hidden;margin-top:4px}
+.bar2 i{display:block;height:100%;background:var(--grad);border-radius:6px}
+</style>
+</head>
+<body>
+<div class="app" id="app"><main>
+<section class="view on" id="v-home"><div class="pad">
+  <div class="hero">
+    <img class="hlogo" id="logo" alt="">
+    <div style="flex:1;min-width:0"><h1>Metin2-Multiversum</h1><div class="sub" id="greet">Dein Begleiter für Ruby</div></div>
+    <button class="gearbtn" id="gear" aria-label="Einstellungen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </div>
+  <div class="hstats" id="stats"></div>
+  <div class="cds" id="cdowns"></div>
+  <div class="hints" id="hints"></div>
+  <div id="homesess"></div>
+  <h3>Letzte Drops</h3>
+  <div id="recent"></div>
+</div></section>
+<section class="view" id="v-events"><div class="pad">
+  <div class="hero" style="margin-bottom:14px"><div style="flex:1;min-width:0"><h1>Events</h1><div class="sub">Erinnerung kommt als Push – auch wenn die App zu ist</div></div></div>
+  <h3 style="margin-top:0">Nächste Termine</h3>
+  <div id="evnext"></div>
+  <h3>Alle Events</h3>
+  <div id="evall"></div>
+</div></section>
+<section class="view" id="v-farm"><div class="pad" id="farm"></div></section>
+<section class="view" id="v-prices"><div class="pad" id="prices"></div></section>
+<section class="view" id="v-wiki"><div class="pad" id="wiki"></div></section>
+<section class="view" id="v-sub"><div class="pad" id="sub"></div></section>
+</main>
+<nav>
+  <button class="on" data-v="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>Start</button>
+  <button data-v="events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Events<span class="badge" id="b-ev"></span></button>
+  <button data-v="farm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 3.5 6 6-9.5 9.5H5v-6z"/><path d="m13 5 6 6"/><path d="M3 21l3-3"/></svg>Farmen<span class="badge" id="b-farm"></span></button>
+  <button data-v="prices"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>Preise</button>
+  <button data-v="wiki"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>Wiki</button>
+</nav>
+</div>
+<button id="fab" aria-label="Hinzufügen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="cg" x1="0" x2="1"><stop offset="0" stop-color="#6fe3ff"/><stop offset=".55" stop-color="#a78bff"/><stop offset="1" stop-color="#e59bff"/></linearGradient>
+  <linearGradient id="ca" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a78bff" stop-opacity=".6"/><stop offset="1" stop-color="#a78bff" stop-opacity="0"/></linearGradient>
+</defs></svg>
+<div id="scrim"></div>
+<div id="sheet"></div>
+<div id="toast"></div>
+<script>
+const APP_BUILD = 0; // wird beim Bauen der APK durch die Build-Nummer ersetzt
+const UPDATE_INFO = 'https://raw.githubusercontent.com/MrDocMoris/Metin2-Multiversum/main/app/version.json';
+const WIKI_INFO = 'https://raw.githubusercontent.com/MrDocMoris/Metin2-Multiversum/main/daten/wiki.json';
+const WIKI_BASE = 'https://de-wiki.metin2.gameforge.com/index.php/';
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function store(k, v){ try{ if(v === undefined) return JSON.parse(localStorage.getItem(k)); localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+let toastT; function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
+function openSheet(html){ $('#sheet').innerHTML = '<div class="grab"></div>' + html; $('#sheet').classList.add('on'); $('#scrim').classList.add('on'); $('#sheet').scrollTop = 0; }
+function closeSheet(){ $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on'); }
+$('#scrim').onclick = closeSheet;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+/* Android-App (Capacitor) */
+const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const _plugs = {};
+function plug(name){
+  if(!NATIVE) return null;
+  if(!_plugs[name]) _plugs[name] = (window.capacitorExports && window.capacitorExports.registerPlugin) ? window.capacitorExports.registerPlugin(name) : window.Capacitor.Plugins[name];
+  return _plugs[name];
+}
+function openUrl(url){ if(NATIVE) plug('Browser').open({url}).catch(() => { location.href = url; }); else window.open(url, '_blank'); }
+
+/* ================= Daten (offline, auf dem Gerät) ================= */
+const S = {
+  cfg: Object.assign({char:'', cls:'Schamane', lvl:'', server:'Ruby', notify:true, remind:15}, store('m2_cfg') || {}),
+  events: store('m2_events') || [],
+  drops: store('m2_drops') || [],
+  sessions: store('m2_sessions') || [],
+  prices: store('m2_prices') || [],
+  active: store('m2_active') || null, // laufende Farm-Session
+  wiki: null, update: null, view: 'home',
+};
+const saveCfg = () => { store('m2_cfg', S.cfg); scheduleReminders(); autoBackup(); };
+const saveEvents = () => { store('m2_events', S.events); scheduleReminders(); autoBackup(); };
+const saveDrops = () => { store('m2_drops', S.drops); autoBackup(); };
+const saveSessions = () => { store('m2_sessions', S.sessions); store('m2_active', S.active); autoBackup(); };
+const savePrices = () => { store('m2_prices', S.prices); autoBackup(); };
+
+/* Datum-Helfer */
+const pad2 = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const todayStr = () => ymd(new Date());
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return ymd(d); };
+const WD = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+const wdOf = s => (parse(s).getDay() + 6) % 7; // Mo = 0
+const hm = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+function fmtDay(ds){ const t = todayStr(); if(ds === t) return 'Heute'; if(ds === addDays(t, 1)) return 'Morgen'; if(ds === addDays(t, -1)) return 'Gestern'; const d = parse(ds); return `${WD[wdOf(ds)]}, ${d.getDate()}.${d.getMonth() + 1}.`; }
+function fmtDur(ms){ const m = Math.max(0, Math.round(ms / 60000)); if(m < 60) return `${m} Min`; const h = Math.floor(m / 60); if(h < 48) return `${h} Std ${m % 60 ? (m % 60) + ' Min' : ''}`.trim(); return `${Math.round(h / 24)} Tage`; }
+
+/* ================= Yang: Eingabe & Anzeige ================= */
+// Versteht: 1500000 · 1.500.000 · 1,5kk · 2kkk · 250k · 3 Won · 1,2 Mio
+function parseYang(s){
+  s = String(s ?? '').trim().toLowerCase().replace(/\s+/g, '').replace(/yang$/, '');
+  if(!s) return null;
+  const m = s.match(/^(\d+(?:[.,]\d+)*)(won|w|kkk|kk|k|mio|mrd)?$/);
+  if(!m) return null;
+  let n = m[1];
+  if(!m[2] && /^\d{1,3}([.]\d{3})+$/.test(n)) n = n.replace(/\./g, '');
+  else if(/^\d{1,3}([.]\d{3})+,\d+$/.test(n)) n = n.replace(/\./g, '').replace(',', '.');
+  else n = n.replace(',', '.');
+  const v = parseFloat(n); if(!isFinite(v)) return null;
+  const mul = {won:1e8, w:1e8, kkk:1e9, kk:1e6, k:1e3, mio:1e6, mrd:1e9}[m[2]] || 1;
+  return Math.round(v * mul);
+}
+function fmtYang(n, long){
+  if(n == null || !isFinite(n)) return '–';
+  const f = (x, d) => x.toLocaleString('de-DE', {maximumFractionDigits:d});
+  if(long) return f(n, 0) + ' Yang';
+  if(n >= 1e8) return f(n / 1e8, 2) + ' Won';
+  if(n >= 1e6) return f(n / 1e6, n >= 1e7 ? 0 : 1) + 'kk';
+  if(n >= 1e3) return f(n / 1e3, 0) + 'k';
+  return f(n, 0);
+}
+
+/* ================= Wiki-Datenbank ================= */
+const CAT_NAMES = {w:'⚔️ Waffen', r:'🛡️ Rüstungen', s:'💍 Schmuck', u:'⬆️ Upp-Items', b:'📘 Lehrbücher', o:'🎁 Sonstiges'};
+function setWiki(data){
+  if(!data || !Array.isArray(data.eintraege)) return false;
+  const items = new Map();
+  data.eintraege.forEach(e => {
+    e.key = (e.n || '').toLowerCase();
+    Object.entries(e.d || {}).forEach(([cat, list]) => list.forEach(name => {
+      const k = name.toLowerCase();
+      if(!items.has(k)) items.set(k, {n:name, cat, from:[]});
+      items.get(k).from.push(e);
+    }));
+  });
+  data.items = items;
+  data.byKey = new Map(data.eintraege.map(e => [e.key, e]));
+  S.wiki = data;
+  return true;
+}
+async function loadWiki(){
+  const cached = store('m2_wiki');
+  if(cached) setWiki(cached);
+  if(!S.wiki){ // mitgelieferte Daten aus der App
+    try{ const r = await fetch('wiki.json'); if(r.ok){ const d = await r.json(); if(setWiki(d)) store('m2_wiki', d); } }catch(e){}
+  }
+  if(S.wiki) renderAll();
+  const last = store('m2_wikicheck');
+  if(!last || Date.now() - last > 864e5) refreshWiki(false);
+}
+async function refreshWiki(manual){
+  try{
+    const r = await fetch(WIKI_INFO + '?t=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) throw new Error(r.status === 404 ? 'Noch keine Wiki-Daten im Repo' : 'Fehler ' + r.status);
+    const d = await r.json();
+    store('m2_wikicheck', Date.now());
+    if(!S.wiki || d.stand !== S.wiki.stand || manual){ if(setWiki(d)){ store('m2_wiki', d); if(manual) toast(`📚 Wiki-Daten vom ${fmtDate(d.stand)} geladen`); renderAll(); } }
+    else if(manual) toast('Wiki-Daten sind aktuell');
+  }catch(e){ if(manual) toast(e.message && !/fetch/i.test(e.message) ? e.message : 'Keine Verbindung'); }
+}
+const fmtDate = s => s ? parse(s).toLocaleDateString('de-DE') : '–';
+const wikiEntry = name => S.wiki && S.wiki.byKey.get(String(name || '').toLowerCase());
+const wikiItem = name => S.wiki && S.wiki.items.get(String(name || '').toLowerCase());
+function entryIcon(e){ return e.t === 'metin' ? '🪨' : e.st >= 5 ? '👹' : e.st >= 3 ? '💀' : '🐺'; }
+function itemIcon(cat){ return ({w:'⚔️', r:'🛡️', s:'💍', u:'⬆️', b:'📘', o:'🎁'})[cat] || '🎁'; }
+
+/* Vorschläge beim Tippen (Monster/Metins oder Items) */
+function suggest(input, kind, onPick){
+  const box = document.createElement('div'); box.className = 'sugg'; input.after(box);
+  const run = () => {
+    const q = input.value.trim().toLowerCase();
+    if(q.length < 2){ box.classList.remove('on'); return; }
+    let res = [];
+    const own = kind === 'item' ? [...new Set([...S.drops.map(d => d.item), ...S.prices.map(p => p.item)])] : [...new Set(S.sessions.map(s => s.mob).concat(S.drops.map(d => d.mob)).filter(Boolean))];
+    own.filter(n => n.toLowerCase().includes(q)).slice(0, 4).forEach(n => res.push({n, s:'zuletzt'}));
+    if(S.wiki){
+      if(kind === 'item') for(const it of S.wiki.items.values()){ if(res.length > 12) break; if(it.n.toLowerCase().includes(q) && !res.some(r => r.n === it.n)) res.push({n:it.n, s:CAT_NAMES[it.cat]}); }
+      else for(const e of S.wiki.eintraege){ if(res.length > 12) break; if(e.key.includes(q) && !res.some(r => r.n === e.n)) res.push({n:e.n, s:e.lv ? 'Lv ' + e.lv : ''}); }
+    }
+    if(!res.length){ box.classList.remove('on'); return; }
+    box.innerHTML = res.map((r, i) => `<button data-i="${i}">${esc(r.n)}<small>${esc(r.s || '')}</small></button>`).join('');
+    box.classList.add('on');
+    box.querySelectorAll('button').forEach(b => b.onclick = () => { input.value = res[+b.dataset.i].n; box.classList.remove('on'); onPick && onPick(input.value); });
+  };
+  input.addEventListener('input', run);
+  input.addEventListener('blur', () => setTimeout(() => box.classList.remove('on'), 200));
+}
+
+/* ================= Events ================= */
+const EV_TEMPLATES = [
+  ['⭐', 'EXP-Event'], ['💰', 'Yang-Event'], ['🎁', 'Drop-Event'], ['🍀', 'Happy Hour'], ['🪨', 'Metin-Fieber'], ['👹', 'Boss-Event'],
+  ['🎣', 'Angel-Event'], ['⚔️', 'Gildenkrieg'], ['🎃', 'Saison-Event'], ['🏆', 'Turnier / OX'], ['🧭', 'Dungeon-Termin'], ['📌', 'Eigenes'],
+];
+const REMINDS = [[0, 'Beim Start'], [5, '5 Min'], [15, '15 Min'], [30, '30 Min'], [60, '1 Std'], [-1, 'Keine']];
+function occursOn(e, ds){
+  if(e.from && ds < e.from) return false;
+  if(e.until && ds > e.until) return false;
+  if(e.rep === 'once') return e.date === ds;
+  if(e.rep === 'daily') return true;
+  if(e.rep === 'weekly') return (e.days || []).includes(wdOf(ds));
+  return false;
+}
+// Alle Vorkommen der nächsten n Tage (inkl. laufender) als {e, start, end}
+function occurrences(days = 14, fromDs){
+  const out = [], t0 = fromDs || addDays(todayStr(), -1), now = Date.now();
+  for(let i = 0; i <= days; i++){
+    const ds = addDays(t0, i);
+    for(const e of S.events){
+      if(!occursOn(e, ds)) continue;
+      const [h, m] = (e.start || '00:00').split(':').map(Number);
+      const st = parse(ds); st.setHours(h, m, 0, 0);
+      let en = null;
+      if(e.end){ const [h2, m2] = e.end.split(':').map(Number); en = parse(ds); en.setHours(h2, m2, 0, 0); if(en <= st) en.setDate(en.getDate() + 1); }
+      const endT = en ? en.getTime() : st.getTime() + 60 * 60000;
+      if(endT < now) continue;
+      out.push({e, ds, start:st.getTime(), end:endT, hasEnd:!!en});
+    }
+  }
+  return out.sort((a, b) => a.start - b.start);
+}
+const isLive = o => o.start <= Date.now() && Date.now() < o.end;
+function evWhen(o){
+  if(isLive(o)) return o.hasEnd ? `läuft noch ${fmtDur(o.end - Date.now())}` : 'jetzt';
+  return `in ${fmtDur(o.start - Date.now())}`;
+}
+function repText(e){
+  if(e.rep === 'daily') return 'täglich';
+  if(e.rep === 'weekly'){ const d = (e.days || []).slice().sort(); return d.length === 7 ? 'täglich' : 'jeden ' + d.map(i => WD[i]).join(', '); }
+  return fmtDay(e.date) + (e.date < todayStr() ? ' (vorbei)' : '');
+}
+function evRow(o, full){
+  const occ = !!o.e, e = occ ? o.e : o;
+  const time = e.start + (e.end ? '–' + e.end : '');
+  return `<button class="ev${occ && isLive(o) ? ' live' : ''}" data-ev="${e.id}">
+    <div class="ic">${esc(e.icon || '📌')}</div>
+    <div class="mid">${occ ? `<div class="dt">${fmtDay(o.ds)} · ${evWhen(o)}</div>` : ''}<div class="nm">${esc(e.name)}</div>
+    <div class="meta">${esc(time)} Uhr · ${esc(repText(e))}${e.remind >= 0 ? ` · 🔔 ${e.remind ? e.remind + ' Min vorher' : 'beim Start'}` : ''}</div>
+    ${full && e.note ? `<div class="note">${esc(e.note)}</div>` : ''}</div></button>`;
+}
+function renderEvents(){
+  const occ = occurrences(10).slice(0, 8);
+  $('#evnext').innerHTML = occ.length ? occ.map(o => evRow(o, true)).join('') : `<div class="empty">Noch keine Events eingetragen.<br>Tippe auf <b>+</b> – zum Beispiel für das nächste EXP- oder Metin-Event auf ${esc(S.cfg.server)}.</div>`;
+  const all = S.events.slice().sort((a, b) => (a.rep === 'once') - (b.rep === 'once') || a.start.localeCompare(b.start));
+  $('#evall').innerHTML = all.length ? all.map(e => evRow(e)).join('') : '';
+  $$('[data-ev]').forEach(b => b.onclick = () => editEvent(S.events.find(x => x.id === b.dataset.ev)));
+}
+function editEvent(e, tpl, draft){
+  const isNew = !e;
+  e = draft ? draft : e ? JSON.parse(JSON.stringify(e)) : {id:uid(), icon:tpl ? tpl[0] : '📌', name:tpl && tpl[1] !== 'Eigenes' ? tpl[1] : '', rep:'once', date:todayStr(), days:[wdOf(todayStr())], start:'20:00', end:'', remind:S.cfg.remind, note:'', created:Date.now()};
+  if(isNew && !tpl && !draft){
+    openSheet(`<h2>Welches Event?</h2><div class="icons" style="grid-template-columns:repeat(3,1fr)">${EV_TEMPLATES.map((t, i) => `<button data-t="${i}" style="aspect-ratio:auto;padding:12px 4px;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:24px">${t[0]}</span>${esc(t[1])}</button>`).join('')}</div>
+      <p class="muted" style="margin-top:12px">Die genauen Termine kündigt Gameforge meist kurzfristig im Forum oder Discord an – hier nur noch Tag und Uhrzeit eintragen.</p>`);
+    $$('#sheet [data-t]').forEach(b => b.onclick = () => editEvent(null, EV_TEMPLATES[+b.dataset.t]));
+    return;
+  }
+  const draw = () => {
+    openSheet(`<h2>${isNew ? 'Neues Event' : 'Event bearbeiten'}</h2>
+      <div class="two"><div style="flex:0 0 64px"><label class="f">Symbol</label><input type="text" id="e-icon" value="${esc(e.icon)}" style="text-align:center;font-size:20px;padding:7px"></div>
+      <div><label class="f">Name</label><input type="text" id="e-name" value="${esc(e.name)}" placeholder="z. B. EXP-Event 50 %"></div></div>
+      <label class="f">Wiederholung</label>
+      <div class="seg" id="e-rep">${[['once', 'Einmal'], ['weekly', 'Wöchentlich'], ['daily', 'Täglich']].map(([k, t]) => `<button data-k="${k}" class="${e.rep === k ? 'on' : ''}">${t}</button>`).join('')}</div>
+      ${e.rep === 'once' ? `<label class="f">Datum</label><input type="date" id="e-date" value="${e.date || todayStr()}">` : ''}
+      ${e.rep === 'weekly' ? `<label class="f">Wochentage</label><div class="daysel" id="e-days">${WD.map((d, i) => `<button data-d="${i}" class="${(e.days || []).includes(i) ? 'on' : ''}">${d}</button>`).join('')}</div>` : ''}
+      ${e.rep !== 'once' ? `<div class="two"><div><label class="f">Ab (optional)</label><input type="date" id="e-from" value="${e.from || ''}"></div><div><label class="f">Bis (optional)</label><input type="date" id="e-until" value="${e.until || ''}"></div></div>` : ''}
+      <div class="two"><div><label class="f">Beginn</label><input type="time" id="e-start" value="${e.start}"></div><div><label class="f">Ende (optional)</label><input type="time" id="e-end" value="${e.end || ''}"></div></div>
+      <label class="f">Erinnerung</label>
+      <div class="seg" id="e-rem">${REMINDS.map(([v, t]) => `<button data-v="${v}" class="${e.remind === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+      <label class="f">Notiz</label><textarea id="e-note" placeholder="z. B. Kanal 1, Drop-Ring anziehen">${esc(e.note || '')}</textarea>
+      <div class="btns"><button class="btn pri" id="e-save">Speichern</button>${isNew ? '' : '<button class="btn" id="e-copy">Duplizieren</button><button class="btn del" id="e-del">Löschen</button>'}</div>`);
+    const grab = () => {
+      e.icon = $('#e-icon').value.trim() || '📌'; e.name = $('#e-name').value.trim(); e.start = $('#e-start').value || '20:00'; e.end = $('#e-end').value || ''; e.note = $('#e-note').value.trim();
+      if($('#e-date')) e.date = $('#e-date').value || todayStr();
+      if($('#e-from')){ e.from = $('#e-from').value || ''; e.until = $('#e-until').value || ''; }
+    };
+    $$('#e-rep button').forEach(b => b.onclick = () => { grab(); e.rep = b.dataset.k; if(e.rep === 'weekly' && !(e.days || []).length) e.days = [wdOf(e.date || todayStr())]; draw(); });
+    $$('#e-days button').forEach(b => b.onclick = () => { const d = +b.dataset.d; e.days = e.days.includes(d) ? e.days.filter(x => x !== d) : [...e.days, d]; b.classList.toggle('on'); });
+    $$('#e-rem button').forEach(b => b.onclick = () => { e.remind = +b.dataset.v; $$('#e-rem button').forEach(x => x.classList.toggle('on', x === b)); });
+    $('#e-save').onclick = () => {
+      grab();
+      if(!e.name){ toast('Bitte einen Namen eingeben'); return; }
+      if(e.rep === 'weekly' && !e.days.length){ toast('Mindestens einen Wochentag wählen'); return; }
+      e.changed = Date.now();
+      const i = S.events.findIndex(x => x.id === e.id);
+      if(i >= 0) S.events[i] = e; else S.events.push(e);
+      saveEvents(); closeSheet(); renderAll(); toast(isNew ? '🔔 Event gespeichert' : 'Gespeichert');
+      if(isNew && NATIVE && S.cfg.notify) askNotify(false);
+    };
+    if(!isNew){
+      $('#e-copy').onclick = () => { grab(); const c = Object.assign({}, e, {id:uid(), created:Date.now(), name:e.name + ' (Kopie)'}); closeSheet(); setTimeout(() => editEvent(null, null, c), 260); };
+      $('#e-del').onclick = () => { if(!confirmTwice('#e-del')) return; S.events = S.events.filter(x => x.id !== e.id); saveEvents(); closeSheet(); renderAll(); toast('Event gelöscht'); };
+    }
+  };
+  draw();
+}
+let _confirmT;
+function confirmTwice(sel){ const b = $(sel); if(b.dataset.sure){ return true; } b.dataset.sure = 1; const old = b.textContent; b.textContent = 'Wirklich?'; clearTimeout(_confirmT); _confirmT = setTimeout(() => { if(b.isConnected){ b.textContent = old; delete b.dataset.sure; } }, 2500); return false; }
+
+/* ================= Farmen ================= */
+function sessDrops(sid){ return S.drops.filter(d => d.sess === sid); }
+function lastPrice(item){ const p = S.prices.find(x => x.item.toLowerCase() === String(item).toLowerCase()); return p && p.entries.length ? p.entries[p.entries.length - 1].p : null; }
+function dropsValue(list){ let v = 0, n = 0; list.forEach(d => { const p = lastPrice(d.item); if(p){ v += p * (d.qty || 1); n++; } }); return n ? v : null; }
+function startSession(mob, map){
+  if(S.active){ toast('Es läuft schon eine Session'); return; }
+  const w = wikiEntry(mob);
+  S.active = {id:uid(), mob:mob || '', map:map || (w && w.ort && w.ort[0]) || '', start:Date.now(), kills:0, yang:0};
+  saveSessions(); closeSheet(); showView('farm'); toast('⚔️ Session gestartet – viel Glück!');
+}
+function endSession(){
+  const a = S.active; if(!a) return;
+  a.end = Date.now();
+  S.sessions.unshift(a); S.active = null; saveSessions();
+  const dr = sessDrops(a.id), val = dropsValue(dr);
+  openSheet(`<h2>Session beendet 🏁</h2>
+    <div class="kv"><div><span>Dauer</span><b>${fmtDur(a.end - a.start)}</b></div><div><span>Kills</span><b>${a.kills.toLocaleString('de-DE')}</b></div>
+    <div><span>Drops</span><b>${dr.reduce((s, d) => s + (d.qty || 1), 0)}</b></div><div><span>Yang (+ Wert der Drops)</span><b>${fmtYang((a.yang || 0) + (val || 0))}</b></div></div>
+    ${dr.length ? `<div class="ilist">${groupItems(dr).map(([n, q]) => `<button>${esc(n)} <b style="color:var(--gold)">×${q}</b></button>`).join('')}</div>` : '<p class="muted">Diesmal nichts eingetragen.</p>'}
+    <div class="btns"><button class="btn pri" id="x-ok">Fertig</button></div>`);
+  $('#x-ok').onclick = closeSheet; renderAll();
+}
+function groupItems(list){ const m = new Map(); list.forEach(d => m.set(d.item, (m.get(d.item) || 0) + (d.qty || 1))); return [...m.entries()].sort((a, b) => b[1] - a[1]); }
+function addDrop(item, qty, mob, map, silent){
+  item = String(item || '').trim(); if(!item) return;
+  const a = S.active;
+  S.drops.unshift({id:uid(), ts:Date.now(), item, qty:Math.max(1, qty || 1), mob:mob ?? (a ? a.mob : ''), map:map ?? (a ? a.map : ''), sess:a ? a.id : null});
+  saveDrops(); if(!silent) toast(`🎁 ${item} eingetragen`); renderAll();
+}
+function dropSheet(pre){
+  pre = pre || {};
+  const a = S.active;
+  openSheet(`<h2>Drop eintragen</h2>
+    <label class="f">Item</label><input type="text" id="d-item" value="${esc(pre.item || '')}" placeholder="z. B. Segensschriftrolle" autocomplete="off">
+    <div class="two"><div style="flex:0 0 90px"><label class="f">Anzahl</label><input type="text" inputmode="numeric" id="d-qty" value="1"></div>
+    <div><label class="f">Von Monster / Metin</label><input type="text" id="d-mob" value="${esc(pre.mob ?? (a ? a.mob : ''))}" autocomplete="off"></div></div>
+    <label class="f">Map (optional)</label><input type="text" id="d-map" value="${esc(pre.map ?? (a ? a.map : ''))}">
+    <div class="btns"><button class="btn pri" id="d-save">Eintragen</button></div>
+    ${a ? '<p class="muted" style="font-size:12px;margin-top:8px">Wird zur laufenden Session gezählt.</p>' : ''}`);
+  suggest($('#d-item'), 'item'); suggest($('#d-mob'), 'mob', v => { const w = wikiEntry(v); if(w && w.ort && !$('#d-map').value) $('#d-map').value = w.ort[0]; });
+  if(!pre.item) setTimeout(() => $('#d-item').focus(), 300);
+  $('#d-save').onclick = () => { const it = $('#d-item').value.trim(); if(!it){ toast('Welches Item?'); return; } addDrop(it, parseInt($('#d-qty').value, 10) || 1, $('#d-mob').value.trim(), $('#d-map').value.trim()); closeSheet(); };
+}
+function sessionSheet(mob){
+  openSheet(`<h2>Farm-Session starten ⚔️</h2>
+    <p class="muted" style="margin:0 0 6px">Zähle Kills und Drops – danach siehst du, wie oft etwas wirklich droppt.</p>
+    <label class="f">Monster / Metin</label><input type="text" id="s-mob" value="${esc(mob || '')}" placeholder="z. B. Metin der Seele" autocomplete="off">
+    <label class="f">Map</label><input type="text" id="s-map" placeholder="z. B. Hwang-Tempel">
+    <div class="btns"><button class="btn pri" id="s-go">Los geht's</button></div>`);
+  suggest($('#s-mob'), 'mob', v => { const w = wikiEntry(v); if(w && w.ort) $('#s-map').value = w.ort[0]; });
+  if(mob){ const w = wikiEntry(mob); if(w && w.ort) $('#s-map').value = w.ort[0]; }
+  $('#s-go').onclick = () => startSession($('#s-mob').value.trim(), $('#s-map').value.trim());
+}
+function sessCard(a, compact){
+  const dr = sessDrops(a.id), w = wikiEntry(a.mob);
+  const possible = w ? Object.values(w.d || {}).flat() : [];
+  const quick = [...new Set([...groupItems(dr).map(x => x[0]), ...possible])].slice(0, compact ? 0 : 14);
+  const counts = new Map(groupItems(dr));
+  return `<div class="sess">
+    <div class="top"><div style="font-size:28px">${w ? entryIcon(w) : '⚔️'}</div><div style="flex:1;min-width:0"><b>${esc(a.mob || 'Farm-Session')}</b><small>${esc(a.map || '')}${a.map ? ' · ' : ''}seit ${fmtDur(Date.now() - a.start)}</small></div>
+    ${compact ? '<button class="chip" id="hs-open">Öffnen</button>' : '<button class="chip" id="sx-end">Beenden</button>'}</div>
+    ${compact ? `<div class="muted" style="margin-top:6px">${a.kills} Kills · ${dr.length} Drops</div>` : `
+    <div class="kills"><button class="kbtn s" id="k-m">−1</button><div class="n">${a.kills.toLocaleString('de-DE')}<small>Kills</small></div><button class="kbtn s" id="k-10">+10</button><button class="kbtn" id="k-1">+1</button></div>
+    <div class="dchips">${quick.map(n => `<button data-q="${esc(n)}">${esc(n)}${counts.get(n) ? `<b>×${counts.get(n)}</b>` : ''}</button>`).join('')}<button id="q-other">＋ anderes Item</button></div>
+    <div class="two" style="margin-top:10px;align-items:center"><div class="muted">💰 Yang gesammelt</div><div style="flex:0 0 130px"><input type="text" id="s-yang" value="${a.yang ? fmtYang(a.yang) : ''}" placeholder="z. B. 2,5kk"></div></div>`}
+  </div>`;
+}
+function wireSess(){
+  const a = S.active; if(!a) return;
+  const k = n => { a.kills = Math.max(0, a.kills + n); store('m2_active', a); if(navigator.vibrate) navigator.vibrate(12); renderFarm(); };
+  if($('#k-1')){ $('#k-1').onclick = () => k(1); $('#k-10').onclick = () => k(10); $('#k-m').onclick = () => k(-1); }
+  $$('[data-q]').forEach(b => b.onclick = () => { addDrop(b.dataset.q, 1, null, null, true); if(navigator.vibrate) navigator.vibrate(25); toast(`🎁 ${b.dataset.q} +1`); });
+  if($('#q-other')) $('#q-other').onclick = () => dropSheet();
+  if($('#sx-end')) $('#sx-end').onclick = () => { if(confirmTwice('#sx-end')) endSession(); };
+  if($('#s-yang')) $('#s-yang').onchange = e => { const v = parseYang(e.target.value); a.yang = v || 0; store('m2_active', a); e.target.value = v ? fmtYang(v) : ''; };
+  if($('#hs-open')) $('#hs-open').onclick = () => showView('farm');
+}
+let farmTab = 'log';
+function renderFarm(){
+  const el = $('#farm'), a = S.active;
+  let h = `<div class="hero" style="margin-bottom:14px"><div style="flex:1;min-width:0"><h1>Farmen</h1><div class="sub">Was droppt wo – und wie oft</div></div>${a ? '' : '<button class="chip on" id="f-start">⚔️ Session</button>'}</div>`;
+  if(a) h += sessCard(a);
+  h += `<div class="seg" style="margin-bottom:12px" id="f-tabs">${[['log', 'Verlauf'], ['stats', 'Statistik'], ['sess', 'Sessions']].map(([k, t]) => `<button data-k="${k}" class="${farmTab === k ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+  if(farmTab === 'log'){
+    if(!S.drops.length) h += `<div class="empty">Noch keine Drops.<br>Starte eine <b>Session</b> oder tippe auf <b>+</b>.</div>`;
+    let last = '';
+    S.drops.slice(0, 150).forEach(d => {
+      const ds = ymd(new Date(d.ts));
+      if(ds !== last){ h += `<h3>${fmtDay(ds)}</h3>`; last = ds; }
+      const it = wikiItem(d.item);
+      h += `<button class="row" data-drop="${d.id}"><div class="ic">${itemIcon(it && it.cat)}</div><div class="mid"><b>${esc(d.item)}${d.qty > 1 ? ` <span style="color:var(--gold)">×${d.qty}</span>` : ''}</b><small>${esc([d.mob, d.map].filter(Boolean).join(' · ') || '–')}</small></div><div class="rt"><small>${hm(new Date(d.ts))}</small></div></button>`;
+    });
+  } else if(farmTab === 'stats'){
+    const top = groupItems(S.drops).slice(0, 15), max = top.length ? top[0][1] : 1;
+    h += `<h3 style="margin-top:0">Häufigste Drops</h3>` + (top.length ? top.map(([n, q]) => {
+      // Droprate: nur aus Sessions mit gezählten Kills
+      const ss = S.sessions.filter(s => s.kills > 0 && sessDrops(s.id).some(d => d.item === n));
+      const kills = ss.reduce((s, x) => s + x.kills, 0), got = ss.reduce((s, x) => s + sessDrops(x.id).filter(d => d.item === n).reduce((a, d) => a + (d.qty || 1), 0), 0);
+      return `<button class="row" data-item="${esc(n)}"><div class="mid"><b>${esc(n)}</b><small>${kills ? `≈ 1 pro ${Math.max(1, Math.round(kills / got)).toLocaleString('de-DE')} Kills (${kills.toLocaleString('de-DE')} Kills gezählt)` : 'Droprate: in einer Session Kills zählen'}</small><div class="bar2"><i style="width:${Math.round(q / max * 100)}%"></i></div></div><div class="rt"><b>${q}×</b></div></button>`;
+    }).join('') : '<div class="empty">Noch keine Daten.</div>');
+    const mobs = new Map(); S.drops.forEach(d => { if(d.mob) mobs.set(d.mob, (mobs.get(d.mob) || 0) + (d.qty || 1)); });
+    if(mobs.size) h += `<h3>Nach Monster</h3>` + [...mobs.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([m, q]) => `<button class="row" data-mob="${esc(m)}"><div class="ic">${wikiEntry(m) ? entryIcon(wikiEntry(m)) : '⚔️'}</div><div class="mid"><b>${esc(m)}</b></div><div class="rt"><b>${q}</b><small>Drops</small></div></button>`).join('');
+  } else {
+    h += S.sessions.length ? S.sessions.slice(0, 60).map(s => { const dr = sessDrops(s.id), v = dropsValue(dr);
+      return `<button class="row" data-sess="${s.id}"><div class="ic">${wikiEntry(s.mob) ? entryIcon(wikiEntry(s.mob)) : '⚔️'}</div><div class="mid"><b>${esc(s.mob || 'Session')}</b><small>${fmtDay(ymd(new Date(s.start)))} · ${fmtDur(s.end - s.start)} · ${s.kills} Kills · ${dr.length} Drops</small></div><div class="rt"><b>${fmtYang((s.yang || 0) + (v || 0))}</b><small>Yang</small></div></button>`; }).join('') : '<div class="empty">Noch keine beendeten Sessions.</div>';
+  }
+  el.innerHTML = h;
+  wireSess();
+  if($('#f-start')) $('#f-start').onclick = () => sessionSheet();
+  $$('#f-tabs button').forEach(b => b.onclick = () => { farmTab = b.dataset.k; renderFarm(); });
+  $$('#farm [data-drop]').forEach(b => b.onclick = () => dropDetail(S.drops.find(d => d.id === b.dataset.drop)));
+  $$('#farm [data-item]').forEach(b => b.onclick = () => openItem(b.dataset.item));
+  $$('#farm [data-mob]').forEach(b => b.onclick = () => openEntry(b.dataset.mob));
+  $$('#farm [data-sess]').forEach(b => b.onclick = () => sessDetail(S.sessions.find(s => s.id === b.dataset.sess)));
+}
+function dropDetail(d){
+  if(!d) return;
+  openSheet(`<h2>${esc(d.item)}</h2><p class="muted" style="margin:0">${new Date(d.ts).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})} Uhr</p>
+    <div class="two"><div style="flex:0 0 90px"><label class="f">Anzahl</label><input type="text" inputmode="numeric" id="dd-q" value="${d.qty || 1}"></div><div><label class="f">Monster</label><input type="text" id="dd-m" value="${esc(d.mob || '')}"></div></div>
+    <label class="f">Map</label><input type="text" id="dd-map" value="${esc(d.map || '')}">
+    <div class="btns"><button class="btn pri" id="dd-s">Speichern</button><button class="btn" id="dd-i">Item-Infos</button><button class="btn del" id="dd-del">Löschen</button></div>`);
+  $('#dd-s').onclick = () => { d.qty = Math.max(1, parseInt($('#dd-q').value, 10) || 1); d.mob = $('#dd-m').value.trim(); d.map = $('#dd-map').value.trim(); saveDrops(); closeSheet(); renderAll(); };
+  $('#dd-i').onclick = () => { closeSheet(); openItem(d.item); };
+  $('#dd-del').onclick = () => { if(!confirmTwice('#dd-del')) return; S.drops = S.drops.filter(x => x.id !== d.id); saveDrops(); closeSheet(); renderAll(); toast('Gelöscht'); };
+}
+function sessDetail(s){
+  if(!s) return;
+  const dr = sessDrops(s.id), v = dropsValue(dr);
+  openSheet(`<h2>${esc(s.mob || 'Session')}</h2><p class="muted" style="margin:0">${esc(s.map || '')} · ${new Date(s.start).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})} Uhr</p>
+    <div class="kv"><div><span>Dauer</span><b>${fmtDur(s.end - s.start)}</b></div><div><span>Kills</span><b>${s.kills.toLocaleString('de-DE')}</b></div>
+    <div><span>Yang</span><b>${fmtYang(s.yang || 0)}</b></div><div><span>Wert der Drops</span><b>${v ? fmtYang(v) : '–'}</b></div></div>
+    ${dr.length ? `<div class="ilist">${groupItems(dr).map(([n, q]) => `<button data-i="${esc(n)}">${esc(n)} <b style="color:var(--gold)">×${q}</b></button>`).join('')}</div>` : ''}
+    <div class="btns"><button class="btn" id="sd-again">Nochmal farmen</button><button class="btn del" id="sd-del">Löschen</button></div>`);
+  $$('#sheet [data-i]').forEach(b => b.onclick = () => { closeSheet(); openItem(b.dataset.i); });
+  $('#sd-again').onclick = () => startSession(s.mob, s.map);
+  $('#sd-del').onclick = () => { if(!confirmTwice('#sd-del')) return; S.sessions = S.sessions.filter(x => x.id !== s.id); S.drops = S.drops.filter(d => d.sess !== s.id); saveSessions(); saveDrops(); closeSheet(); renderAll(); toast('Session und ihre Drops gelöscht'); };
+}
+
+/* ================= Preise ================= */
+function priceStats(p){
+  const v = p.entries.map(e => e.p);
+  if(!v.length) return {};
+  const recent = p.entries.filter(e => e.ts > Date.now() - 30 * 864e5).map(e => e.p);
+  const base = recent.length >= 2 ? recent : v;
+  const avg = base.reduce((a, b) => a + b, 0) / base.length;
+  const last = v[v.length - 1], prev = v.length > 1 ? v[v.length - 2] : null;
+  let hint = null;
+  if(base.length >= 3){ if(last <= avg * .85) hint = 'cheap'; else if(last >= avg * 1.15) hint = 'dear'; }
+  return {avg, last, prev, min:Math.min(...v), max:Math.max(...v), n:v.length, hint};
+}
+const hintTag = h => h === 'cheap' ? '<span class="tag cheap">günstig</span>' : h === 'dear' ? '<span class="tag dear">teuer</span>' : '';
+let priceQ = '';
+function renderPrices(){
+  const el = $('#prices');
+  const list = S.prices.filter(p => !priceQ || p.item.toLowerCase().includes(priceQ)).sort((a, b) => (b.entries.at(-1)?.ts || 0) - (a.entries.at(-1)?.ts || 0));
+  el.innerHTML = `<div class="hero" style="margin-bottom:14px"><div style="flex:1;min-width:0"><h1>Preise</h1><div class="sub">Was Items auf ${esc(S.cfg.server)} gerade kosten</div></div></div>
+    ${S.prices.length > 6 ? `<div class="sbox"><input type="text" id="p-q" placeholder="Item suchen …" value="${esc(priceQ)}"></div>` : ''}
+    ${list.length ? list.map(p => { const st = priceStats(p); const tr = st.prev == null ? '' : st.last > st.prev ? '<span class="up">▲</span>' : st.last < st.prev ? '<span class="down">▼</span>' : '';
+      return `<button class="row" data-p="${p.id}"><div class="ic">${itemIcon(wikiItem(p.item)?.cat)}</div><div class="mid"><b>${esc(p.item)} ${hintTag(st.hint)}</b><small>Ø ${fmtYang(st.avg)} · ${st.n} Preis${st.n === 1 ? '' : 'e'} · ${fmtDay(ymd(new Date(p.entries.at(-1).ts)))}</small></div><div class="rt"><b>${tr} ${fmtYang(st.last)}</b><small>zuletzt</small></div></button>`; }).join('')
+      : `<div class="empty">${priceQ ? 'Nichts gefunden.' : 'Noch keine Preise.<br>Tippe auf <b>+</b> und trag ein, was du im Privatladen gesehen hast.<br><br><small>Tipp: Du kannst „1,5kk“, „250k“ oder „2 Won“ schreiben.</small>'}</div>`}`;
+  if($('#p-q')){ $('#p-q').oninput = e => { priceQ = e.target.value.trim().toLowerCase(); const pos = e.target.selectionStart; renderPrices(); const i = $('#p-q'); i.focus(); i.setSelectionRange(pos, pos); }; }
+  $$('#prices [data-p]').forEach(b => b.onclick = () => priceDetail(S.prices.find(p => p.id === b.dataset.p)));
+}
+function priceSheet(item){
+  openSheet(`<h2>Preis eintragen 💰</h2>
+    <label class="f">Item</label><input type="text" id="pp-i" value="${esc(item || '')}" autocomplete="off" placeholder="z. B. Segensschriftrolle">
+    <div class="two"><div><label class="f">Preis (pro Stück)</label><input type="text" id="pp-p" placeholder="z. B. 1,5kk"></div><div style="flex:0 0 110px"><label class="f">Datum</label><input type="date" id="pp-d" value="${todayStr()}"></div></div>
+    <div class="muted" id="pp-show" style="margin-top:6px;min-height:18px"></div>
+    <label class="f">Notiz (optional)</label><input type="text" id="pp-n" placeholder="z. B. Laden in Map 1, Verkauft">
+    <div class="btns"><button class="btn pri" id="pp-s">Speichern</button></div>`);
+  suggest($('#pp-i'), 'item');
+  $('#pp-p').oninput = () => { const v = parseYang($('#pp-p').value); $('#pp-show').textContent = v ? '= ' + fmtYang(v, true) : $('#pp-p').value ? 'Format z. B. 1500000, 1,5kk, 250k oder 2 Won' : ''; };
+  setTimeout(() => (item ? $('#pp-p') : $('#pp-i')).focus(), 300);
+  $('#pp-s').onclick = () => {
+    const it = $('#pp-i').value.trim(), v = parseYang($('#pp-p').value);
+    if(!it){ toast('Welches Item?'); return; } if(!v){ toast('Preis nicht erkannt'); return; }
+    let p = S.prices.find(x => x.item.toLowerCase() === it.toLowerCase());
+    if(!p){ p = {id:uid(), item:it, entries:[], created:Date.now()}; S.prices.push(p); }
+    const d = $('#pp-d').value, ts = d && d !== todayStr() ? parse(d).setHours(12) : Date.now();
+    p.entries.push({ts, p:v, note:$('#pp-n').value.trim()}); p.entries.sort((a, b) => a.ts - b.ts); p.changed = Date.now();
+    savePrices(); closeSheet(); renderAll();
+    const st = priceStats(p); toast(st.hint === 'cheap' ? '💚 Gespeichert – das ist gerade günstig!' : st.hint === 'dear' ? '🔺 Gespeichert – das ist gerade teuer' : 'Preis gespeichert');
+  };
+}
+function chartSVG(entries){
+  if(entries.length < 2) return '';
+  const W = 340, H = 170, P = 28, xs = entries.map(e => e.ts), ys = entries.map(e => e.p);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys) * .9, y1 = Math.max(...ys) * 1.05 || 1;
+  const X = t => P + (x1 === x0 ? (W - P - 8) / 2 : (t - x0) / (x1 - x0) * (W - P - 8)), Y = v => H - 18 - (v - y0) / (y1 - y0 || 1) * (H - 30);
+  const pts = entries.map(e => `${X(e.ts).toFixed(1)},${Y(e.p).toFixed(1)}`).join(' ');
+  const avg = ys.reduce((a, b) => a + b, 0) / ys.length;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <polygon class="ar" points="${X(x0)},${H - 18} ${pts} ${X(x1)},${H - 18}"/>
+    <line class="avg" x1="${P}" x2="${W - 8}" y1="${Y(avg)}" y2="${Y(avg)}"/>
+    <polyline class="ln" points="${pts}"/>
+    ${entries.map(e => `<circle cx="${X(e.ts)}" cy="${Y(e.p)}" r="3" fill="#efecff"/>`).join('')}
+    <text x="2" y="${Y(y1 / 1.05) + 4}">${fmtYang(y1 / 1.05)}</text><text x="2" y="${H - 20}">${fmtYang(y0 / .9)}</text>
+    <text x="${P}" y="${H - 4}">${new Date(x0).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}</text><text x="${W - 8}" y="${H - 4}" text-anchor="end">${new Date(x1).toLocaleDateString('de-DE', {day:'numeric', month:'short'})}</text>
+  </svg>`;
+}
+function priceDetail(p){
+  if(!p) return;
+  const st = priceStats(p);
+  openSheet(`<h2>${esc(p.item)} ${hintTag(st.hint)}</h2>
+    ${chartSVG(p.entries)}
+    <div class="kv"><div><span>Zuletzt</span><b>${fmtYang(st.last)}</b></div><div><span>Ø (30 Tage)</span><b>${fmtYang(st.avg)}</b></div><div><span>Günstigster</span><b class="down">${fmtYang(st.min)}</b></div><div><span>Teuerster</span><b class="up">${fmtYang(st.max)}</b></div></div>
+    <div class="btns" style="margin-top:4px"><button class="btn pri" id="pd-add">＋ Neuer Preis</button><button class="btn" id="pd-i">Item-Infos</button></div>
+    <h3>Alle Einträge</h3>
+    ${p.entries.slice().reverse().map((e, i) => `<div class="row" style="cursor:default"><div class="mid"><b>${fmtYang(e.p)}</b><small>${new Date(e.ts).toLocaleDateString('de-DE')}${e.note ? ' · ' + esc(e.note) : ''} · ${fmtYang(e.p, true)}</small></div><button class="chip" data-del="${p.entries.length - 1 - i}">✕</button></div>`).join('')}
+    <div class="btns"><button class="btn del" id="pd-del">Item mit allen Preisen löschen</button></div>`);
+  $('#pd-add').onclick = () => priceSheet(p.item);
+  $('#pd-i').onclick = () => { closeSheet(); openItem(p.item); };
+  $$('#sheet [data-del]').forEach(b => b.onclick = () => { p.entries.splice(+b.dataset.del, 1); if(!p.entries.length) S.prices = S.prices.filter(x => x !== p); savePrices(); renderAll(); if(p.entries.length) priceDetail(p); else closeSheet(); });
+  $('#pd-del').onclick = () => { if(!confirmTwice('#pd-del')) return; S.prices = S.prices.filter(x => x !== p); savePrices(); closeSheet(); renderAll(); toast('Gelöscht'); };
+}
+
+/* ================= Wiki ================= */
+let wikiQ = '', wikiF = 'all';
+function renderWikiIfOpen(){ if(S.view === 'wiki') renderWiki(); }
+function renderWiki(){
+  const el = $('#wiki'), W = S.wiki;
+  let h = `<div class="hero" style="margin-bottom:12px"><div style="flex:1;min-width:0"><h1>Wiki</h1><div class="sub">${W ? `${W.eintraege.length.toLocaleString('de-DE')} Monster & Metins · ${W.items.size.toLocaleString('de-DE')} Items · Stand ${fmtDate(W.stand)}` : 'Monster, Metins & Drops aus dem offiziellen Wiki'}</div></div></div>`;
+  if(!W){
+    el.innerHTML = h + `<div class="empty">Die Wiki-Daten sind noch nicht da.<br>Sie werden automatisch geladen, sobald sie im Repo bereitliegen.<br><br><button class="btn pri" id="w-load" style="max-width:240px">Jetzt laden</button></div>`;
+    $('#w-load').onclick = () => refreshWiki(true);
+    return;
+  }
+  h += `<div class="sbox"><input type="text" id="w-q" placeholder="Monster, Metin oder Item suchen …" value="${esc(wikiQ)}" autocomplete="off"></div>
+    <div class="chips" style="margin-bottom:12px" id="w-f">${[['all', 'Alle'], ['m', 'Monster'], ['metin', 'Metins'], ['boss', 'Bosse'], ['item', 'Items']].map(([k, t]) => `<button class="chip${wikiF === k ? ' on' : ''}" data-k="${k}">${t}</button>`).join('')}</div><div id="w-res"></div>`;
+  el.innerHTML = h;
+  const inp = $('#w-q');
+  inp.oninput = () => { wikiQ = inp.value.trim().toLowerCase(); renderWikiRes(); };
+  $$('#w-f button').forEach(b => b.onclick = () => { wikiF = b.dataset.k; $$('#w-f button').forEach(x => x.classList.toggle('on', x === b)); renderWikiRes(); });
+  renderWikiRes();
+}
+function renderWikiRes(){
+  const W = S.wiki, q = wikiQ, out = [];
+  if(wikiF !== 'item'){
+    for(const e of W.eintraege){
+      if(wikiF === 'm' && e.t !== 'm') continue;
+      if(wikiF === 'metin' && e.t !== 'metin') continue;
+      if(wikiF === 'boss' && !(e.st >= 5)) continue;
+      if(q && !e.key.includes(q) && !(e.ort || []).some(o => o.toLowerCase().includes(q))) continue;
+      out.push(`<button class="row" data-e="${esc(e.n)}"><div class="ic">${entryIcon(e)}</div><div class="mid"><b>${esc(e.n)}</b><small>${esc([e.r, (e.ort || []).slice(0, 3).join(', ')].filter(Boolean).join(' · '))}</small></div><div class="rt">${e.lv ? `<span class="tag lv">Lv ${e.lv}</span>` : ''}</div></button>`);
+      if(out.length >= 80) break;
+    }
+  }
+  if((wikiF === 'all' && q) || wikiF === 'item'){
+    let n = 0;
+    for(const it of W.items.values()){
+      if(q && !it.n.toLowerCase().includes(q)) continue;
+      out.push(`<button class="row" data-i="${esc(it.n)}"><div class="ic">${itemIcon(it.cat)}</div><div class="mid"><b>${esc(it.n)}</b><small>droppt von ${it.from.length} Monster${it.from.length === 1 ? '' : 'n'}</small></div><div class="rt">${lastPrice(it.n) ? `<b>${fmtYang(lastPrice(it.n))}</b>` : ''}</div></button>`);
+      if(++n >= 80) break;
+    }
+  }
+  $('#w-res').innerHTML = out.length ? out.join('') + (out.length >= 80 ? '<p class="muted" style="text-align:center">Weitertippen, um die Suche einzugrenzen …</p>' : '') : '<div class="empty">Nichts gefunden.</div>';
+  $$('#w-res [data-e]').forEach(b => b.onclick = () => openEntry(b.dataset.e));
+  $$('#w-res [data-i]').forEach(b => b.onclick = () => openItem(b.dataset.i));
+}
+// Unterseiten (Monster / Item) mit eigenem Zurück-Verlauf
+S.hist = [];
+function subPage(html){
+  if(S.view !== 'sub') S.subBack = S.view;
+  $('#sub').innerHTML = `<div class="subhead"><button class="iconbtn" id="sub-back" aria-label="Zurück"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>${html.head}</div>${html.body}`;
+  showView('sub', true);
+  $('#v-sub').scrollTop = 0;
+  $('#sub-back').onclick = goBack;
+}
+function goBack(){
+  S.hist.pop();
+  const prev = S.hist[S.hist.length - 1];
+  if(prev) prev(true); else showView(S.subBack || 'home');
+}
+function openEntry(name, fromHist){
+  const e = wikiEntry(name);
+  if(!fromHist) S.hist.push(f => openEntry(name, f));
+  const mine = S.drops.filter(d => (d.mob || '').toLowerCase() === String(name).toLowerCase());
+  const mineSet = new Set(mine.map(d => d.item.toLowerCase()));
+  if(!e){
+    subPage({head:`<h1>${esc(name)}</h1>`, body:`<p class="muted">Nicht in den Wiki-Daten – nur deine eigenen Einträge:</p>${mine.length ? `<div class="ilist">${groupItems(mine).map(([n, q]) => `<button data-i="${esc(n)}">${esc(n)} <b style="color:var(--gold)">×${q}</b></button>`).join('')}</div>` : '<div class="empty">Noch keine Drops.</div>'}
+      <div class="btns"><button class="btn pri" id="en-farm">⚔️ Hier farmen</button></div>`});
+  } else {
+    const cats = Object.entries(e.d || {});
+    subPage({head:`<div style="font-size:28px">${entryIcon(e)}</div><h1>${esc(e.n)}</h1>`, body:`
+      <div class="kv">${e.lv ? `<div><span>Level</span><b>${e.lv}</b></div>` : ''}${e.st ? `<div><span>Stufe</span><b>${e.st}${e.st >= 5 ? ' (Boss)' : ''}</b></div>` : ''}${e.r ? `<div><span>Rasse</span><b>${esc(e.r)}</b></div>` : ''}${e.el ? `<div><span>Element</span><b>${esc(e.el)}</b></div>` : ''}${e.exp ? `<div><span>EXP</span><b>${e.exp.toLocaleString('de-DE')}</b></div>` : ''}${e.hp ? `<div><span>Trefferpunkte</span><b>${e.hp.toLocaleString('de-DE')}</b></div>` : ''}</div>
+      ${(e.ort || []).length ? `<div class="dcat">📍 Fundorte</div><div class="muted" style="font-size:14px;color:var(--text)">${e.ort.map(esc).join(' · ')}</div>` : ''}
+      ${cats.length ? cats.map(([k, list]) => `<div class="dcat">${CAT_NAMES[k] || k}</div><div class="ilist">${list.map(n => `<button data-i="${esc(n)}" class="${mineSet.has(n.toLowerCase()) ? 'have' : ''}">${esc(n)}</button>`).join('')}</div>`).join('') : '<p class="muted">Im Wiki sind keine Drops eingetragen.</p>'}
+      ${mine.length ? `<div class="dcat">⭐ Deine Drops hier</div><div class="ilist">${groupItems(mine).map(([n, q]) => `<button data-i="${esc(n)}" class="have">${esc(n)} ×${q}</button>`).join('')}</div>` : ''}
+      <div class="btns"><button class="btn pri" id="en-farm">⚔️ Hier farmen</button><button class="btn" id="en-wiki">Im Wiki öffnen</button></div>
+      <p class="muted" style="font-size:12px;margin-top:10px">Quelle: offizielles Metin2-Wiki (Gameforge). Gold markiert = hast du hier schon bekommen.</p>`});
+    $('#en-wiki').onclick = () => openUrl(WIKI_BASE + encodeURIComponent(e.p).replace(/%2F/g, '/'));
+  }
+  $$('#sub [data-i]').forEach(b => b.onclick = () => openItem(b.dataset.i));
+  $('#en-farm').onclick = () => { if(S.active){ toast('Erst die laufende Session beenden'); return; } sessionSheet(e ? e.n : name); };
+}
+function openItem(name, fromHist){
+  const it = wikiItem(name);
+  if(!fromHist) S.hist.push(f => openItem(name, f));
+  const mine = S.drops.filter(d => d.item.toLowerCase() === String(name).toLowerCase());
+  const p = S.prices.find(x => x.item.toLowerCase() === String(name).toLowerCase()), st = p ? priceStats(p) : null;
+  const from = it ? it.from.slice().sort((a, b) => (a.lv || 999) - (b.lv || 999)) : [];
+  subPage({head:`<div style="font-size:28px">${itemIcon(it && it.cat)}</div><h1>${esc(it ? it.n : name)}</h1>`, body:`
+    <div class="kv"><div><span>Dein Preis zuletzt</span><b>${st ? fmtYang(st.last) + ' ' + hintTag(st.hint) : '–'}</b></div><div><span>Selbst gefunden</span><b>${mine.reduce((s, d) => s + (d.qty || 1), 0)}×</b></div></div>
+    <div class="btns" style="margin-top:0"><button class="btn pri" id="it-drop">🎁 Drop eintragen</button><button class="btn" id="it-price">💰 Preis eintragen</button></div>
+    ${st && p.entries.length > 1 ? `<button class="row" id="it-pd" style="margin-top:12px"><div class="mid"><b>Preisverlauf ansehen</b><small>${st.n} Preise · Ø ${fmtYang(st.avg)}</small></div><div class="rt">›</div></button>` : ''}
+    <div class="dcat">Droppt von${from.length ? ` (${from.length})` : ''}</div>
+    ${from.length ? from.slice(0, 60).map(e => `<button class="row" data-e="${esc(e.n)}"><div class="ic">${entryIcon(e)}</div><div class="mid"><b>${esc(e.n)}</b><small>${esc((e.ort || []).slice(0, 3).join(', '))}</small></div><div class="rt">${e.lv ? `<span class="tag lv">Lv ${e.lv}</span>` : ''}</div></button>`).join('') : '<p class="muted">Nicht in den Wiki-Daten gefunden (vielleicht aus Truhen, Quests oder dem Itemshop).</p>'}`});
+  $$('#sub [data-e]').forEach(b => b.onclick = () => openEntry(b.dataset.e));
+  $('#it-drop').onclick = () => dropSheet({item:it ? it.n : name});
+  $('#it-price').onclick = () => priceSheet(it ? it.n : name);
+  if($('#it-pd')) $('#it-pd').onclick = () => priceDetail(p);
+}
+
+/* ================= Start-Seite ================= */
+function renderHome(){
+  const t = todayStr();
+  const today = S.drops.filter(d => ymd(new Date(d.ts)) === t);
+  const killsToday = S.sessions.filter(s => ymd(new Date(s.start)) === t).reduce((a, s) => a + s.kills, 0) + (S.active ? S.active.kills : 0);
+  const yangToday = S.sessions.filter(s => ymd(new Date(s.start)) === t).reduce((a, s) => a + (s.yang || 0), 0) + (S.active ? S.active.yang || 0 : 0);
+  $('#greet').textContent = [S.cfg.char, S.cfg.char && S.cfg.cls, S.cfg.lvl && 'Lv ' + S.cfg.lvl].filter(Boolean).join(' · ') + (S.cfg.char ? ' · ' : '') + S.cfg.server;
+  $('#stats').innerHTML = `<div><b>${today.reduce((s, d) => s + (d.qty || 1), 0)}</b><span>Drops heute</span></div><div><b>${killsToday.toLocaleString('de-DE')}</b><span>Kills heute</span></div><div><b class="g">${fmtYang(yangToday + (dropsValue(today) || 0))}</b><span>Yang heute</span></div>`;
+  const occ = occurrences(7).slice(0, 6);
+  $('#cdowns').innerHTML = occ.length ? occ.map(o => `<button class="cd${isLive(o) ? ' live' : ''}" data-ev="${o.e.id}"><span class="ic">${esc(o.e.icon)}</span><b>${isLive(o) ? 'Jetzt' : o.start - Date.now() < 864e5 ? hm(new Date(o.start)) : WD[wdOf(o.ds)]}</b><span>${isLive(o) ? (o.hasEnd ? 'noch ' + fmtDur(o.end - Date.now()) : 'läuft') : evWhen(o)}</span><div class="t">${esc(o.e.name)}</div></button>`).join('')
+    : `<button class="cd" id="cd-new"><b>＋</b><span>Event eintragen</span><div class="t">Nie wieder eins verpassen</div></button>`;
+  $$('#cdowns [data-ev]').forEach(b => b.onclick = () => editEvent(S.events.find(x => x.id === b.dataset.ev)));
+  if($('#cd-new')) $('#cd-new').onclick = () => { showView('events'); editEvent(); };
+  const hints = [];
+  S.prices.forEach(p => { const st = priceStats(p); if(st.hint === 'cheap' && p.entries.at(-1).ts > Date.now() - 3 * 864e5) hints.push(`<button class="hint" data-p="${p.id}">💚 <span><b>${esc(p.item)}</b> ist gerade günstig: ${fmtYang(st.last)} (Ø ${fmtYang(st.avg)})</span></button>`); });
+  if(!S.wiki) hints.push(`<button class="hint" id="h-wiki">📚 <span>Wiki-Daten werden geladen, sobald sie bereitliegen – dann gibt's Vorschläge beim Tippen.</span></button>`);
+  $('#hints').innerHTML = hints.slice(0, 4).join('');
+  $$('#hints [data-p]').forEach(b => b.onclick = () => priceDetail(S.prices.find(p => p.id === b.dataset.p)));
+  if($('#h-wiki')) $('#h-wiki').onclick = () => refreshWiki(true);
+  $('#homesess').innerHTML = S.active ? sessCard(S.active, true) : `<button class="row" id="h-start"><div class="ic">⚔️</div><div class="mid"><b>Farm-Session starten</b><small>Kills zählen, Drops antippen, Droprate sehen</small></div><div class="rt">›</div></button>`;
+  wireSess(); if($('#h-start')) $('#h-start').onclick = () => sessionSheet();
+  $('#recent').innerHTML = S.drops.length ? S.drops.slice(0, 6).map(d => `<button class="row" data-drop="${d.id}"><div class="ic">${itemIcon(wikiItem(d.item)?.cat)}</div><div class="mid"><b>${esc(d.item)}${d.qty > 1 ? ` <span style="color:var(--gold)">×${d.qty}</span>` : ''}</b><small>${esc([d.mob, d.map].filter(Boolean).join(' · ') || '–')}</small></div><div class="rt"><small>${fmtDay(ymd(new Date(d.ts)))}<br>${hm(new Date(d.ts))}</small></div></button>`).join('') : '<div class="empty">Noch nichts gefarmt.</div>';
+  $$('#recent [data-drop]').forEach(b => b.onclick = () => dropDetail(S.drops.find(d => d.id === b.dataset.drop)));
+}
+
+/* ================= Navigation ================= */
+function showView(v, keepSub){
+  if(!keepSub) S.hist = [];
+  S.view = v;
+  $$('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
+  $$('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v || (v === 'sub' && b.dataset.v === S.subBack)));
+  $('#fab').style.display = ['home', 'events', 'farm', 'prices'].includes(v) ? '' : 'none';
+  const sec = $('#v-' + v); if(sec && !keepSub) sec.scrollTop = 0;
+  if(v === 'home') renderHome(); else if(v === 'events') renderEvents(); else if(v === 'farm') renderFarm(); else if(v === 'prices') renderPrices(); else if(v === 'wiki') renderWiki();
+}
+$$('nav button').forEach(b => b.onclick = () => showView(b.dataset.v));
+$('#fab').onclick = () => {
+  if(S.view === 'events') editEvent();
+  else if(S.view === 'prices') priceSheet();
+  else if(S.view === 'farm') dropSheet();
+  else { openSheet(`<h2>Was möchtest du eintragen?</h2><div class="tiles">
+    <button class="tile" id="q1"><div class="ti" style="background:var(--panel2)">🎁</div><div class="tt">Drop</div><div class="ts">Item gefunden</div></button>
+    <button class="tile" id="q2"><div class="ti" style="background:var(--panel2)">💰</div><div class="tt">Preis</div><div class="ts">Im Laden gesehen</div></button>
+    <button class="tile" id="q3"><div class="ti" style="background:var(--panel2)">🔔</div><div class="tt">Event</div><div class="ts">Mit Erinnerung</div></button>
+    <button class="tile" id="q4"><div class="ti" style="background:var(--panel2)">⚔️</div><div class="tt">Session</div><div class="ts">Kills & Drops zählen</div></button></div>`);
+    $('#q1').onclick = () => dropSheet(); $('#q2').onclick = () => priceSheet(); $('#q3').onclick = () => editEvent();
+    $('#q4').onclick = () => { if(S.active){ closeSheet(); showView('farm'); } else sessionSheet(); };
+  }
+};
+function renderBadges(){
+  const live = occurrences(1).filter(isLive).length;
+  $('#b-ev').textContent = live ? live : '';
+  $('#b-farm').textContent = S.active ? '●' : '';
+}
+function renderAll(){ if(S.view === 'sub' && S.hist.length){ const sc = $('#v-sub').scrollTop; S.hist[S.hist.length - 1](true); $('#v-sub').scrollTop = sc; } else showView(S.view === 'sub' ? (S.subBack || 'home') : S.view); renderBadges(); }
+if(NATIVE){
+  try{ plug('App').addListener('backButton', () => { if($('#sheet').classList.contains('on')) closeSheet(); else if(S.view === 'sub') goBack(); else if(S.view !== 'home') showView('home'); else plug('App').exitApp(); }); }catch(e){}
+}
+
+/* ================= Einstellungen ================= */
+const CLASSES = ['Krieger', 'Ninja', 'Sura', 'Schamane', 'Lykaner'];
+$('#gear').onclick = () => {
+  const c = S.cfg;
+  openSheet(`<h2>Einstellungen</h2>
+    <h3 style="margin-top:4px">Charakter</h3>
+    <div class="two"><div><label class="f">Name</label><input type="text" id="c-char" value="${esc(c.char)}" placeholder="dein Charname"></div><div style="flex:0 0 90px"><label class="f">Level</label><input type="text" inputmode="numeric" id="c-lvl" value="${esc(c.lvl)}"></div></div>
+    <label class="f">Klasse</label><div class="seg" id="c-cls">${CLASSES.map(k => `<button class="${c.cls === k ? 'on' : ''}">${k}</button>`).join('')}</div>
+    <label class="f">Server</label><input type="text" id="c-srv" value="${esc(c.server)}">
+    <h3>Erinnerungen</h3>
+    <div class="sw"><div>Push-Benachrichtigungen<div class="muted" id="s-notinfo"></div></div><button class="tog${c.notify ? ' on' : ''}" id="c-not"></button></div>
+    <label class="f">Standard-Vorlauf für neue Events</label><div class="seg" id="c-rem">${REMINDS.filter(r => r[0] >= 0).map(([v, t]) => `<button data-v="${v}" class="${c.remind === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <h3>Wiki-Daten</h3>
+    <div class="set-row"><div class="muted">${S.wiki ? `Stand ${fmtDate(S.wiki.stand)} · ${S.wiki.eintraege.length} Einträge` : 'noch nicht geladen'}<br><small>Werden zweimal im Monat automatisch aus dem offiziellen Wiki geholt.</small></div><button class="chip" id="c-wiki">Prüfen</button></div>
+    <h3>Sicherung</h3>
+    <div class="muted" id="s-bk"></div>
+    <div class="btns" style="margin-top:8px"><button class="btn" id="c-bk">💾 Jetzt sichern</button><button class="btn" id="c-cp">Kopieren</button><button class="btn" id="c-imp">Einfügen</button></div>
+    <h3>App</h3>
+    <div class="set-row"><div class="muted" id="upd-info"></div><button class="chip" id="upd-check">Nach Updates suchen</button></div>
+    <p class="muted" style="font-size:12px;margin-top:12px">Metin2-Multiversum ist eine private Fan-App und hat nichts mit Gameforge oder Webzen zu tun. Monster- und Drop-Daten: offizielles Metin2-Wiki.</p>`);
+  const grab = () => { c.char = $('#c-char').value.trim(); c.lvl = $('#c-lvl').value.trim(); c.server = $('#c-srv').value.trim() || 'Ruby'; saveCfg(); renderAll(); };
+  ['#c-char', '#c-lvl', '#c-srv'].forEach(s => $(s).onchange = grab);
+  $$('#c-cls button').forEach(b => b.onclick = () => { c.cls = b.textContent; $$('#c-cls button').forEach(x => x.classList.toggle('on', x === b)); saveCfg(); renderAll(); });
+  $$('#c-rem button').forEach(b => b.onclick = () => { c.remind = +b.dataset.v; $$('#c-rem button').forEach(x => x.classList.toggle('on', x === b)); saveCfg(); });
+  $('#c-not').onclick = async e => { c.notify = !c.notify; e.currentTarget.classList.toggle('on', c.notify); if(c.notify) await askNotify(true); saveCfg(); renderNotifyInfo(); };
+  $('#c-wiki').onclick = () => refreshWiki(true);
+  $('#c-bk').onclick = () => writeBackup(true);
+  $('#c-cp').onclick = async () => { try{ await navigator.clipboard.writeText(backupJSON()); toast('Sicherung kopiert'); }catch(e){ toast('Kopieren nicht möglich'); } };
+  $('#c-imp').onclick = () => { openSheet(`<h2>Sicherung einfügen</h2><textarea id="imp-t" style="min-height:160px" placeholder="Hier die kopierte Sicherung einfügen"></textarea><div class="btns"><button class="btn pri" id="imp-go">Einfügen</button></div><p class="muted" style="font-size:12px">Vorhandene Einträge bleiben erhalten, neue kommen dazu.</p>`); $('#imp-go').onclick = () => importBackup($('#imp-t').value); };
+  $('#upd-check').onclick = () => { if(S.update) showUpdateSheet(); else checkUpdate(true); };
+  renderUpdateInfo(); renderNotifyInfo(); renderBackupInfo();
+};
+
+/* ================= Sicherung ================= */
+const BK_DIR = 'Metin2-Multiversum';
+const backupJSON = () => JSON.stringify({app:'Metin2-Multiversum', v:1, date:new Date().toISOString(), cfg:S.cfg, events:S.events, drops:S.drops, sessions:S.sessions, prices:S.prices, active:S.active});
+function importBackup(text){
+  try{
+    const d = JSON.parse(text); if(d.app !== 'Metin2-Multiversum') throw 0;
+    const merge = (mine, theirs) => { const m = new Map(mine.map(x => [x.id, x])); let n = 0; (theirs || []).forEach(x => { const o = m.get(x.id); if(!o){ n++; m.set(x.id, x); } else if((x.changed || 0) > (o.changed || 0)) m.set(x.id, x); }); return [[...m.values()], n]; };
+    let n1, n2, n3;
+    [S.events, n1] = merge(S.events, d.events); [S.drops, n2] = merge(S.drops, d.drops); [S.sessions] = merge(S.sessions, d.sessions);
+    // Preise: pro Item zusammenführen
+    (d.prices || []).forEach(p => { const o = S.prices.find(x => x.item.toLowerCase() === p.item.toLowerCase()); if(!o) S.prices.push(p); else { const ks = new Set(o.entries.map(e => e.ts + '|' + e.p)); p.entries.forEach(e => { if(!ks.has(e.ts + '|' + e.p)) o.entries.push(e); }); o.entries.sort((a, b) => a.ts - b.ts); } });
+    S.drops.sort((a, b) => b.ts - a.ts); S.sessions.sort((a, b) => b.start - a.start);
+    if(d.cfg && !S.cfg.char) S.cfg = Object.assign(S.cfg, d.cfg, {notify:S.cfg.notify});
+    saveEvents(); saveDrops(); saveSessions(); savePrices(); saveCfg(); closeSheet(); renderAll();
+    toast(`Eingefügt: ${n1} Events, ${n2} Drops`);
+  }catch(e){ toast('Das ist keine gültige Sicherung'); }
+}
+let _bkT;
+function autoBackup(){ if(!NATIVE) return; clearTimeout(_bkT); _bkT = setTimeout(() => writeBackup(false), 3000); }
+async function writeBackup(manual){
+  const FS = plug('Filesystem');
+  if(!FS){ if(manual){ const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([backupJSON()], {type:'application/json'})); a.download = `metin2-multiversum-${todayStr()}.json`; a.click(); } return; }
+  try{
+    try{ const p = await FS.checkPermissions(); if(p.publicStorage !== 'granted') await FS.requestPermissions(); }catch(e){}
+    await FS.writeFile({path:`${BK_DIR}/sicherung-${todayStr()}.json`, data:backupJSON(), directory:'DOCUMENTS', encoding:'utf8', recursive:true});
+    store('m2_lastbk', Date.now()); renderBackupInfo();
+    try{
+      const r = await FS.readdir({path:BK_DIR, directory:'DOCUMENTS'});
+      const files = (r.files || []).map(f => typeof f === 'string' ? f : f.name).filter(n => /^sicherung-\d{4}-\d{2}-\d{2}\.json$/.test(n)).sort();
+      for(const n of files.slice(0, Math.max(0, files.length - 7))) await FS.deleteFile({path:`${BK_DIR}/${n}`, directory:'DOCUMENTS'}).catch(() => {});
+    }catch(e){}
+    if(manual) toast('💾 Gesichert in Dokumente/Metin2-Multiversum');
+  }catch(e){ if(manual) toast('Sicherung fehlgeschlagen: ' + (e.message || e)); }
+}
+function renderBackupInfo(){
+  const el = $('#s-bk'); if(!el) return;
+  const t = store('m2_lastbk');
+  el.textContent = !NATIVE ? 'Im Browser: „Jetzt sichern“ lädt eine Datei herunter.' : t ? `Automatisch täglich · zuletzt ${new Date(t).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})} Uhr` : 'Noch keine Sicherung';
+}
+
+/* ================= App-Updates (wie bei TCG Multiversum) ================= */
+async function checkUpdate(manual){
+  if(!APP_BUILD && !manual) return;
+  try{
+    let r;
+    try{ r = await fetch(UPDATE_INFO + '?t=' + Date.now(), {cache:'no-store'}); }
+    catch(e){ if(manual) toast('Keine Verbindung – bist du online?'); return; }
+    if(!r.ok){ if(manual) toast(r.status === 404 ? 'Update-Info nicht gefunden – ist das GitHub-Repo öffentlich?' : `Update-Server antwortet nicht (Fehler ${r.status})`); return; }
+    const v = await r.json();
+    const build = parseInt(v.build, 10);
+    S.update = (build > APP_BUILD && v.apk) ? {build, url:v.apk, notes:v.notes || '', size:v.size} : null;
+    renderUpdateInfo();
+    if(S.update){ if(manual || store('m2_upd_skip') !== build) showUpdateSheet(); }
+    else if(manual) toast('Du hast die neueste Version');
+  }catch(e){ if(manual) toast('Update-Info ist fehlerhaft'); }
+}
+function renderUpdateInfo(){
+  const el = $('#upd-info'); if(!el) return;
+  el.innerHTML = `Version 1.${APP_BUILD || '–'}` + (S.update ? ` · <b style="color:var(--acc)">1.${S.update.build} verfügbar</b>` : '');
+}
+function showUpdateSheet(){
+  const u = S.update; if(!u) return;
+  const notes = u.notes.replace(/\r/g, '').replace(/^#+\s*/gm, '').replace(/\*\*/g, '').trim();
+  openSheet(`
+    <h2 style="margin:0 0 4px">Neue Version 1.${u.build}</h2>
+    <p class="muted" style="margin:0 0 10px">Du hast 1.${APP_BUILD}.${u.size ? ` Download ca. ${(u.size / 1048576).toLocaleString('de-DE', {maximumFractionDigits:1})} MB.` : ''}</p>
+    ${notes ? `<div style="white-space:pre-wrap;background:var(--panel2);border-radius:10px;padding:10px;font-size:14px;margin-bottom:12px">${esc(notes)}</div>` : ''}
+    <div class="btns"><button class="btn pri" id="u-go">Jetzt aktualisieren</button><button class="btn" id="u-later">Später</button></div>
+    <p class="muted" style="font-size:12px;margin-top:10px">Die neue APK wird im Browser geladen. Danach auf die Datei tippen und „Installieren" wählen. Deine Daten bleiben erhalten.</p>`);
+  $('#u-go').onclick = () => openUrl(u.url);
+  $('#u-later').onclick = () => { store('m2_upd_skip', u.build); closeSheet(); };
+}
+
+/* ================= Erinnerungen (lokale Benachrichtigungen) ================= */
+const hashId = str => { let h = 0; for(let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return Math.abs(h) % 2000000000 + 1; };
+let _schedT;
+function scheduleReminders(){ if(!NATIVE) return; clearTimeout(_schedT); _schedT = setTimeout(doSchedule, 800); }
+async function doSchedule(){
+  const LN = plug('LocalNotifications'); if(!LN) return;
+  try{
+    const pend = await LN.getPending();
+    if(pend.notifications && pend.notifications.length) await LN.cancel({notifications:pend.notifications.map(n => ({id:n.id}))});
+    if(!S.cfg.notify) return;
+    const perm = await LN.checkPermissions(); if(perm.display !== 'granted') return;
+    const now = Date.now(), list = [];
+    occurrences(21, todayStr()).forEach(o => {
+      const e = o.e; if(e.remind == null || e.remind < 0) return;
+      const at = o.start - e.remind * 60000;
+      if(at <= now + 5000) return;
+      list.push({id:hashId(e.id + o.ds), title:`${e.icon || '🔔'} ${e.name}`, body:(e.remind ? `In ${e.remind >= 60 ? (e.remind / 60) + ' Std' : e.remind + ' Min'} · ${e.start} Uhr` : `Jetzt · ${e.start} Uhr`) + (e.end ? ` bis ${e.end}` : '') + ` auf ${S.cfg.server}` + (e.note ? `\n${e.note}` : ''), schedule:{at:new Date(at), allowWhileIdle:true}, extra:{ev:e.id}});
+    });
+    list.sort((a, b) => a.schedule.at - b.schedule.at);
+    if(list.length) await LN.schedule({notifications:list.slice(0, 60)});
+  }catch(e){ console.log('Erinnerungen:', e); }
+}
+async function askNotify(force){
+  const LN = plug('LocalNotifications'); if(!LN) return;
+  try{ let p = await LN.checkPermissions(); if(p.display !== 'granted' && (force || !store('m2_asked'))){ store('m2_asked', 1); p = await LN.requestPermissions(); } }catch(e){}
+  scheduleReminders();
+}
+async function renderNotifyInfo(){
+  const el = $('#s-notinfo'); if(!el) return;
+  if(!NATIVE){ el.textContent = 'nur in der Android-App'; return; }
+  try{ const p = await plug('LocalNotifications').checkPermissions(); el.textContent = !S.cfg.notify ? 'aus' : p.display === 'granted' ? 'aktiv – für deine Events' : 'Bitte Benachrichtigungen erlauben (Android-Einstellungen)'; }catch(e){ el.textContent = ''; }
+}
+if(NATIVE){
+  try{ plug('LocalNotifications').addListener('localNotificationActionPerformed', () => { closeSheet(); showView('events'); }); }catch(e){}
+}
+
+/* ================= Start ================= */
+$('#logo').src = 'icon.svg';
+$('#logo').onerror = () => { $('#logo').style.display = 'none'; };
+showView('home'); renderBadges();
+loadWiki();
+setInterval(() => { if(document.hidden) return; renderBadges(); if(S.view === 'home') renderHome(); else if(S.view === 'events') renderEvents(); }, 60000);
+document.addEventListener('visibilitychange', () => { if(!document.hidden){ renderBadges(); if(S.view === 'home') renderHome(); } });
+setTimeout(() => checkUpdate(false), 2500);
+if(NATIVE){
+  setTimeout(async () => { if(S.cfg.notify && S.events.length) await askNotify(false); scheduleReminders(); }, 1200);
+  { const t = store('m2_lastbk'); if(!t || ymd(new Date(t)) !== todayStr()) setTimeout(() => writeBackup(false), 4000); }
+}
+</script>
+</body>
+</html>

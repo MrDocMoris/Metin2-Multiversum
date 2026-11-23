@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+  <radialGradient id="bg" cx="50%" cy="42%" r="72%"><stop offset="0" stop-color="#2b1c78"/><stop offset=".5" stop-color="#140d3a"/><stop offset="1" stop-color="#07061a"/></radialGradient>
+  <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#66e0ff"/><stop offset=".5" stop-color="#9b7bff"/><stop offset="1" stop-color="#ff5ec8"/></linearGradient>
+  <linearGradient id="stoneL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a2f7a"/><stop offset="1" stop-color="#1a1440"/></linearGradient>
+  <linearGradient id="stoneR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a2160"/><stop offset="1" stop-color="#0f0b2a"/></linearGradient>
+  <linearGradient id="rune" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe29a"/><stop offset="1" stop-color="#ff9d3d"/></linearGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="18"/></filter>
+  <filter id="g2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="8"/></filter>
+</defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<g fill="#fff">
+  <circle cx="160" cy="190" r="4" opacity=".7"/><circle cx="860" cy="150" r="3" opacity=".6"/><circle cx="900" cy="600" r="4" opacity=".55"/>
+  <circle cx="120" cy="680" r="3" opacity=".6"/><circle cx="300" cy="920" r="4" opacity=".5"/><circle cx="790" cy="900" r="3" opacity=".6"/>
+  <circle cx="520" cy="96" r="3" opacity=".5"/><circle cx="70" cy="420" r="2.5" opacity=".6"/>
+</g>
+<ellipse cx="512" cy="600" rx="420" ry="140" fill="none" stroke="url(#ring)" stroke-width="14" opacity=".55" transform="rotate(-14 512 600)"/>
+<!-- Metinstein -->
+<path d="M512 150 700 330 680 760 512 880 344 760 324 330z" fill="#7a4cff" opacity=".6" filter="url(#glow)"/>
+<path d="M512 150 324 330 344 760 512 880z" fill="url(#stoneL)" stroke="url(#ring)" stroke-width="12" stroke-linejoin="round"/>
+<path d="M512 150 700 330 680 760 512 880z" fill="url(#stoneR)" stroke="url(#ring)" stroke-width="12" stroke-linejoin="round"/>
+<path d="M324 330 512 420 700 330" fill="none" stroke="url(#ring)" stroke-width="8" opacity=".6"/>
+<path d="M512 420v460" stroke="url(#ring)" stroke-width="6" opacity=".45"/>
+<!-- leuchtende Rune -->
+<g stroke="url(#rune)" stroke-width="26" stroke-linecap="round" fill="none">
+  <g filter="url(#g2)" opacity=".9"><path d="M440 520h144M512 470v250M455 640l57 60 57-60"/></g>
+  <path d="M440 520h144M512 470v250M455 640l57 60 57-60"/>
+</g>
+<circle cx="140" cy="690" r="30" fill="#7fe3ff"/>
+<circle cx="888" cy="470" r="30" fill="#ffcf6b"/>
+</svg>
