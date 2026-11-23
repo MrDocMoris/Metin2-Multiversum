@@ -16,6 +16,8 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 BASE = 'https://board.de.metin2.gameforge.com/index.php'
 KALENDER = BASE + '?thread/90381-eventkalender/'
 NEWS = BASE + '?board/1167-news-events/'
+NEWS_GAME = BASE + '?board/24-news-game/'
+WARTUNG = BASE + '?thread/56068-wartungsarbeiten/'
 UA = 'Mozilla/5.0 (Metin2-Multiversum; private Begleit-App; github.com/MrDocMoris/Metin2-Multiversum)'
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'daten', 'events.json')
 MONATE = ['januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember']
@@ -191,13 +193,87 @@ def news_events():
     return [e for e in out if (e.get('ende') or e.get('start', ''))[:10] >= today]
 
 
+def berlin_now():
+    return datetime.datetime.now(ZoneInfo('Europe/Berlin'))
+
+
+def wartung():
+    """Letzte Seite des Wartungs-Threads: Ankündigung und „wieder online“."""
+    soup = get(WARTUNG)
+    if not soup:
+        return None
+    pages = soup.find(attrs={'data-pages': True})
+    last = int(pages['data-pages']) if pages and str(pages['data-pages']).isdigit() else 1
+    ps = posts(soup) if last == 1 else []
+    if last > 1:
+        time.sleep(2)
+        s2 = get(WARTUNG + f'&pageNo={last}')
+        ps = posts(s2) if s2 else []
+        if len(ps) < 3 and last > 1:
+            time.sleep(2)
+            s3 = get(WARTUNG + f'&pageNo={last - 1}')
+            ps = (posts(s3) if s3 else []) + ps
+    now = berlin_now()
+    res = {'posts': [], 'naechste': None, 'beendet': None}
+    for p in ps:
+        if not p['date']:
+            continue
+        ref = datetime.datetime.fromisoformat(p['date'])
+        if (now - ref).days > 21:
+            continue
+        text = clean(p['body'].get_text(' ')).replace(' ,', ',')
+        res['posts'].append({'datum': p['date'], 'text': text[:400]})
+        if re.search(r'beendet|wieder online|wieder erreichbar', text, re.I):
+            res['beendet'] = p['date']
+        m = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{4})?[^0-9]{0,25}?(\d{1,2}:\d{2})', text)
+        if m and re.search(r'wartung', text, re.I) and not re.search(r'beendet', text, re.I):
+            mo, d = int(m.group(2)), int(m.group(1))
+            y = int(m.group(3)) if m.group(3) else ref.year + (1 if mo < ref.month - 6 else 0)
+            res['naechste'] = f'{y}-{mo:02d}-{d:02d}T{hhmm(m.group(4))}'
+            res['angekuendigt'] = p['date']
+    res['posts'] = res['posts'][-4:]
+    return res
+
+
+def game_news():
+    """Neuigkeiten aus „News — Game“ (Updates, neue Server …) der letzten 60 Tage."""
+    soup = get(NEWS_GAME)
+    if not soup:
+        return []
+    out, seen = [], set()
+    for a in soup.select('a[href*="?thread/"]'):
+        h = a['href'].split('&')[0]
+        title = clean(a.get_text())
+        if not title or len(title) < 6 or h in seen or re.search(r'eventkalender|wartungsarbeiten', h, re.I):
+            continue
+        seen.add(h)
+        row = a.find_parent(['li', 'tr'])
+        tm = row.select_one('time') if row else None
+        out.append({'titel': title, 'url': h, 'datum': tm.get('datetime') if tm else None})
+    # Ohne Datum in der Liste: Datum aus dem ersten Beitrag holen (nur die ersten paar)
+    for e in [e for e in out if not e['datum']][:8]:
+        time.sleep(2)
+        s2 = get(e['url'])
+        ps = posts(s2) if s2 else []
+        e['datum'] = ps[0]['date'] if ps else None
+    lim = (berlin_now() - datetime.timedelta(days=60)).isoformat()
+    out = [e for e in out if e['datum'] and e['datum'] >= lim[:19]]
+    out.sort(key=lambda e: e['datum'], reverse=True)
+    return out[:8]
+
+
 def main():
     plaene, hinweise = kalender()
     news = news_events()
+    time.sleep(2)
+    wart = wartung()
+    time.sleep(2)
+    gnews = game_news()
+    print(f'Wartung: {wart and wart.get("naechste")} / beendet {wart and wart.get("beendet")} · {len(gnews)} Neuigkeiten')
     print(f'{len(plaene)} Wochenpläne: {[p["server"] for p in plaene]} · {len(news)} aktuelle Events · {len(hinweise)} Hinweise')
     if not plaene and not news:
         raise SystemExit('Keine Daten gefunden – Forum-Aufbau geändert? Alte Datei bleibt.')
-    data = {'quelle': KALENDER, 'plaene': plaene, 'news': news, 'hinweise': hinweise}
+    data = {'quelle': KALENDER, 'plaene': plaene, 'news': news, 'hinweise': hinweise, 'wartung': wart, 'neuigkeiten': gnews}
     old = None
     if os.path.exists(OUT):
         try:

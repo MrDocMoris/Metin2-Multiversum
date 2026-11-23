@@ -7,6 +7,7 @@ on:
       - metin2.html
       - assets/icon.svg
       - .github/workflows/build-apk.yml
+      - native/**
       - daten/wiki.json
   workflow_dispatch:
 
@@ -51,7 +52,7 @@ jobs:
           mkdir -p build/www
           cd build
           npm init -y > /dev/null
-          npm i --no-audit --no-fund @capacitor/core@7 @capacitor/android@7 @capacitor/browser@7 @capacitor/app@7 @capacitor/local-notifications@7 @capacitor/filesystem@7
+          npm i --no-audit --no-fund @capacitor/core@7 @capacitor/android@7 @capacitor/browser@7 @capacitor/app@7 @capacitor/local-notifications@7 @capacitor/filesystem@7 @capacitor/preferences@7
           npm i --no-audit --no-fund -D @capacitor/cli@7
           cp ../metin2.html www/index.html
           sed -i 's/const APP_BUILD = 0;/const APP_BUILD = ${{ github.run_number }};/' www/index.html
@@ -81,6 +82,45 @@ jobs:
               buildTypes {
                   debug { signingConfig signingConfigs.metin }
               }
+          }
+          GRADLE
+
+          # Hintergrund-Prüfung (Forum-Neuigkeiten) mit WorkManager
+          J=android/app/src/main/java/de/mrdocmoris/metin2
+          cp ../native/*.java $J/
+          cp -r ../native/res/. android/app/src/main/res/
+          cat > $J/MainActivity.java << 'JAVA'
+          package de.mrdocmoris.metin2;
+
+          import android.os.Bundle;
+          import androidx.work.Constraints;
+          import androidx.work.ExistingPeriodicWorkPolicy;
+          import androidx.work.ExistingWorkPolicy;
+          import androidx.work.NetworkType;
+          import androidx.work.OneTimeWorkRequest;
+          import androidx.work.PeriodicWorkRequest;
+          import androidx.work.WorkManager;
+          import com.getcapacitor.BridgeActivity;
+          import java.util.concurrent.TimeUnit;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  try {
+                      Constraints c = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
+                      WorkManager wm = WorkManager.getInstance(this);
+                      wm.enqueueUniquePeriodicWork("m2-info", ExistingPeriodicWorkPolicy.KEEP, new PeriodicWorkRequest.Builder(InfoWorker.class, 2, TimeUnit.HOURS).setConstraints(c).build());
+                      wm.enqueueUniqueWork("m2-info-start", ExistingWorkPolicy.REPLACE, new OneTimeWorkRequest.Builder(InfoWorker.class).setConstraints(c).build());
+                  } catch (Exception ignored) {}
+              }
+          }
+          JAVA
+          sed -i 's/^          //' $J/MainActivity.java
+          cat >> android/app/build.gradle << 'GRADLE'
+
+          dependencies {
+              implementation 'androidx.work:work-runtime:2.9.1'
           }
           GRADLE
 
