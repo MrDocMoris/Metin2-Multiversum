@@ -1,0 +1,19 @@
+name: Debug Wiki-HTML (temporaer)
+on:
+  push:
+    branches: [debug-html]
+permissions:
+  contents: write
+jobs:
+  d:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p dbg
+          for p in Monster Metins Wildhund D%C3%A4monenk%C3%B6nig Metin_Pung-Ma Neunschwanz; do
+            curl -s -A "Metin2-Multiversum/1.0" "https://de-wiki.metin2.gameforge.com/index.php/$p" -o "dbg/$p.html"; sleep 1
+          done
+          ls -la dbg
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git add dbg; git commit -m "debug html"; git push
