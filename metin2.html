@@ -269,6 +269,20 @@ textarea{min-height:64px;resize:vertical}
 .cd .ic{float:right;font-size:20px}
 .bar2{height:6px;border-radius:6px;background:var(--panel2);overflow:hidden;margin-top:4px}
 .bar2 i{display:block;height:100%;background:var(--grad);border-radius:6px}
+.wikic{font-size:14px;line-height:1.5;word-break:break-word}
+.wikic h2{font-size:18px;margin:18px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+.wikic h3{font-size:15px;margin:14px 0 6px;color:var(--acc);text-transform:none;letter-spacing:0}
+.wikic h4{font-size:14px;margin:12px 0 4px}
+.wikic ul,.wikic ol{padding-left:20px;margin:6px 0}.wikic dl{margin:4px 0}.wikic dd{margin-left:12px}
+.wikic p{margin:6px 0}
+.wikic img{max-width:100%;height:auto;vertical-align:middle}
+.wikic a[data-w],.wikic a[href]{color:var(--acc);text-decoration:none;border-bottom:1px dotted rgba(127,227,255,.5)}
+.wikic a:not([data-w]):not([href]){color:inherit}
+.wikic .tw{overflow-x:auto;margin:8px -4px;padding:0 4px}
+.wikic table{border-collapse:collapse;font-size:13px;min-width:100%}
+.wikic td,.wikic th{border:1px solid var(--line);padding:5px 7px;vertical-align:top}
+.wikic th{background:var(--panel2)}
+.wikic center{display:block}
 </style>
 </head>
 <body>
@@ -904,15 +918,16 @@ function priceDetail(p){
 let wikiQ = '', wikiF = 'all';
 function renderWikiIfOpen(){ if(S.view === 'wiki') renderWiki(); }
 function renderWiki(){
-  const el = $('#wiki'), W = S.wiki;
-  let h = `<div class="hero" style="margin-bottom:12px"><div style="flex:1;min-width:0"><h1>Wiki</h1><div class="sub">${W ? `${W.eintraege.length.toLocaleString('de-DE')} Monster & Metins · ${W.items.size.toLocaleString('de-DE')} Items · Stand ${fmtDate(W.stand)}` : 'Monster, Metins & Drops aus dem offiziellen Wiki'}</div></div></div>`;
-  if(!W){
+  const el = $('#wiki'), W = S.wiki || {eintraege:[], items:new Map(), byKey:new Map(), stand:''};
+  refreshLib(false);
+  let h = `<div class="hero" style="margin-bottom:12px"><div style="flex:1;min-width:0"><h1>Wiki</h1><div class="sub">${S.wiki ? `${W.eintraege.length.toLocaleString('de-DE')} Monster & Metins · ${W.items.size.toLocaleString('de-DE')} Items${LIB.idx ? ` · ${LIB.idx.seiten.length} Seiten` : ''}` : 'Das offizielle Metin2-Wiki in der App'}</div></div></div>`;
+  if(!S.wiki && !LIB.idx){
     el.innerHTML = h + `<div class="empty">Die Wiki-Daten sind noch nicht da.<br>Sie werden automatisch geladen, sobald sie im Repo bereitliegen.<br><br><button class="btn pri" id="w-load" style="max-width:240px">Jetzt laden</button></div>`;
     $('#w-load').onclick = () => refreshWiki(true);
     return;
   }
-  h += `<div class="sbox"><input type="text" id="w-q" placeholder="Monster, Metin oder Item suchen …" value="${esc(wikiQ)}" autocomplete="off"></div>
-    <div class="chips" style="margin-bottom:12px" id="w-f">${[['all', 'Alle'], ['m', 'Monster'], ['metin', 'Metins'], ['boss', 'Bosse'], ['item', 'Items'], ['maps', 'Maps']].map(([k, t]) => `<button class="chip${wikiF === k ? ' on' : ''}" data-k="${k}">${t}</button>`).join('')}</div><div id="w-res"></div>`;
+  h += `<div class="sbox"><input type="text" id="w-q" placeholder="Suchen: Alchemie, Monster, Item, Quest …" value="${esc(wikiQ)}" autocomplete="off"></div>
+    <div class="chips" style="margin-bottom:12px" id="w-f">${[['all', '📚 Themen'], ['m', 'Monster'], ['metin', 'Metins'], ['boss', 'Bosse'], ['item', 'Items'], ['maps', 'Maps']].map(([k, t]) => `<button class="chip${wikiF === k ? ' on' : ''}" data-k="${k}">${t}</button>`).join('')}</div><div id="w-res"></div>`;
   el.innerHTML = h;
   const inp = $('#w-q');
   inp.oninput = () => { wikiQ = inp.value.trim().toLowerCase(); renderWikiRes(); };
@@ -920,7 +935,9 @@ function renderWiki(){
   renderWikiRes();
 }
 function renderWikiRes(){
-  const W = S.wiki, q = wikiQ, out = [];
+  const W = S.wiki || {eintraege:[], items:new Map()}, q = wikiQ, out = [];
+  if(wikiF === 'all' && !q){ renderLibHome(); return; }
+  if(wikiF === 'all' && q){ const L = libSearch(q, 8); if(L.length) out.push('<h3 style="margin-top:0">📚 Wiki-Seiten</h3>' + libList(L) + '<h3>Monster, Metins & Items</h3>'); }
   if(wikiF === 'maps'){
     const lv = parseInt(S.cfg.lvl, 10);
     const maps = [...mapIndex().entries()].filter(([n]) => !q || n.toLowerCase().includes(q)).map(([n, l]) => { const lvs = l.map(e => e.lv).filter(Boolean); return {n, c:l.length, min:Math.min(...lvs), max:Math.max(...lvs)}; })
@@ -950,6 +967,7 @@ function renderWikiRes(){
   $('#w-res').innerHTML = out.length ? out.join('') + (out.length >= 80 ? '<p class="muted" style="text-align:center">Weitertippen, um die Suche einzugrenzen …</p>' : '') : '<div class="empty">Nichts gefunden.</div>';
   $$('#w-res [data-e]').forEach(b => b.onclick = () => openEntry(b.dataset.e));
   $$('#w-res [data-i]').forEach(b => b.onclick = () => openItem(b.dataset.i));
+  $$('#w-res [data-lib]').forEach(b => b.onclick = () => openLib(b.dataset.lib));
 }
 // Unterseiten (Monster / Item) mit eigenem Zurück-Verlauf
 S.hist = [];
@@ -980,9 +998,10 @@ function openEntry(name, fromHist){
       ${(e.ort || []).length ? `<div class="dcat">📍 Fundorte</div><div class="ilist">${e.ort.map(o => `<button data-map="${esc(mapBase(o))}">🗺️ ${esc(o)}</button>`).join('')}</div>` : ''}
       ${cats.length ? cats.map(([k, list]) => `<div class="dcat">${CAT_NAMES[k] || k}</div><div class="ilist">${list.map(n => `<button data-i="${esc(n)}" class="${mineSet.has(n.toLowerCase()) ? 'have' : ''}">${esc(n)}</button>`).join('')}</div>`).join('') : '<p class="muted">Im Wiki sind keine Drops eingetragen.</p>'}
       ${mine.length ? `<div class="dcat">⭐ Deine Drops hier</div><div class="ilist">${groupItems(mine).map(([n, q]) => `<button data-i="${esc(n)}" class="have">${esc(n)} ×${q}</button>`).join('')}</div>` : ''}
-      <div class="btns"><button class="btn pri" id="en-farm">⚔️ Hier farmen</button><button class="btn" id="en-wiki">Im Wiki öffnen</button></div>
+      <div class="btns"><button class="btn pri" id="en-farm">⚔️ Hier farmen</button>${libPage(e.p) ? '<button class="btn" id="en-lib">📖 Wiki-Seite</button>' : '<button class="btn" id="en-wiki">Im Wiki öffnen</button>'}</div>
       <p class="muted" style="font-size:12px;margin-top:10px">Quelle: offizielles Metin2-Wiki (Gameforge). Gold markiert = hast du hier schon bekommen.</p>`});
-    $('#en-wiki').onclick = () => openUrl(WIKI_BASE + encodeURIComponent(e.p).replace(/%2F/g, '/'));
+    if($('#en-wiki')) $('#en-wiki').onclick = () => openUrl(WIKI_BASE + encodeURIComponent(e.p).replace(/%2F/g, '/'));
+    if($('#en-lib')) $('#en-lib').onclick = () => openLib(e.p);
   }
   $$('#sub [data-i]').forEach(b => b.onclick = () => openItem(b.dataset.i));
   $$('#sub [data-map]').forEach(b => b.onclick = () => { if(mapIndex().has(b.dataset.map)) openMap(b.dataset.map); });
@@ -997,10 +1016,12 @@ function openItem(name, fromHist){
   subPage({head:`<div style="font-size:28px">${itemIcon(it && it.cat)}</div><h1>${esc(it ? it.n : name)}</h1>`, body:`
     <div class="kv"><div><span>Dein Preis zuletzt</span><b>${st ? fmtYang(st.last) + ' ' + hintTag(st.hint) : '–'}</b></div><div><span>Selbst gefunden</span><b>${mine.reduce((s, d) => s + (d.qty || 1), 0)}×</b></div></div>
     <div class="btns" style="margin-top:0"><button class="btn pri" id="it-drop">🎁 Drop eintragen</button><button class="btn" id="it-price">💰 Preis eintragen</button></div>
+    ${libPage(it ? it.n : name) ? `<button class="row" data-lib="${esc(libPage(it ? it.n : name).p)}" style="margin-top:10px"><div class="ic">📖</div><div class="mid"><b>Wiki-Seite lesen</b><small>${esc(libPage(it ? it.n : name).s.slice(0, 70))}</small></div><div class="rt">›</div></button>` : ''}
     ${st && p.entries.length > 1 ? `<button class="row" id="it-pd" style="margin-top:12px"><div class="mid"><b>Preisverlauf ansehen</b><small>${st.n} Preise · Ø ${fmtYang(st.avg)}</small></div><div class="rt">›</div></button>` : ''}
     <div class="dcat">Droppt von${from.length ? ` (${from.length})` : ''}</div>
     ${from.length ? from.slice(0, 60).map(e => `<button class="row" data-e="${esc(e.n)}"><div class="ic">${entryIcon(e)}</div><div class="mid"><b>${esc(e.n)}</b><small>${esc((e.ort || []).slice(0, 3).join(', '))}</small></div><div class="rt">${e.lv ? `<span class="tag lv">Lv ${e.lv}</span>` : ''}</div></button>`).join('') : '<p class="muted">Nicht in den Wiki-Daten gefunden (vielleicht aus Truhen, Quests oder dem Itemshop).</p>'}`});
   $$('#sub [data-e]').forEach(b => b.onclick = () => openEntry(b.dataset.e));
+  $$('#sub [data-lib]').forEach(b => b.onclick = () => openLib(b.dataset.lib));
   $('#it-drop').onclick = () => dropSheet({item:it ? it.n : name});
   $('#it-price').onclick = () => priceSheet(it ? it.n : name);
   if($('#it-pd')) $('#it-pd').onclick = () => priceDetail(p);
@@ -1090,7 +1111,7 @@ $('#gear').onclick = () => {
     <h3>Erinnerungen der Werkzeuge</h3>
     <div class="muted" style="margin-bottom:-4px">🧪 Biologe</div>${remRow('bio')}
     <div class="muted" style="margin:10px 0 -4px">📘 Fertigkeiten</div>${remRow('skill')}
-    <div class="muted" style="margin:10px 0 -4px">🐾 Pets & Reittiere</div>${remRow('pet')}
+    <div class="muted" style="margin:10px 0 -4px">⏳ Pets, Reittiere, Kostüme & Premium-Buffs</div>${remRow('pet')}
     <label class="f" style="margin-top:14px">Vorlauf für Event-Erinnerungen</label><div class="seg" id="c-rem">${REMINDS.filter(r => r[0] >= 0).map(([v, t]) => `<button data-v="${v}" class="${c.remind === v ? 'on' : ''}">${t}</button>`).join('')}</div>
     <h3>Event-Termine</h3>
     <div class="set-row"><div class="muted">${S.off ? `Stand ${S.off.stand ? new Date(S.off.stand).toLocaleString('de-DE') : '–'} · ${(S.off.plaene || []).length} Wochenpläne` : 'noch nicht geladen'}<br><small>Werden zweimal täglich aus dem offiziellen Forum (Eventkalender & News) geholt.</small></div><button class="chip" id="c-off-r">Prüfen</button></div>
@@ -1109,7 +1130,7 @@ $('#gear').onclick = () => {
   $$('#c-cls button').forEach(b => b.onclick = () => { c.cls = b.textContent; $$('#c-cls button').forEach(x => x.classList.toggle('on', x === b)); saveCfg(); renderAll(); });
   $$('#c-rem button').forEach(b => b.onclick = () => { c.remind = +b.dataset.v; $$('#c-rem button').forEach(x => x.classList.toggle('on', x === b)); saveCfg(); });
   $('#c-not').onclick = async e => { c.notify = !c.notify; e.currentTarget.classList.toggle('on', c.notify); if(c.notify) await askNotify(true); saveCfg(); renderNotifyInfo(); };
-  $('#c-wiki').onclick = () => refreshWiki(true);
+  $('#c-wiki').onclick = () => { refreshWiki(true); refreshLib(true); };
   $$('#c-off button').forEach(b => b.onclick = () => { c.offNotify = b.dataset.k; $$('#c-off button').forEach(x => x.classList.toggle('on', x === b)); saveCfg(); if(c.offNotify !== 'off') askNotify(false); });
   $('#c-news').onclick = e => { c.newsNotify = !c.newsNotify; e.currentTarget.classList.toggle('on', c.newsNotify); saveCfg(); };
   $('#c-off-r').onclick = () => refreshOff(true);
@@ -1394,34 +1415,49 @@ function bossSheet(b){
   if(!isNew) $('#bs-d').onclick = () => { if(!confirmTwice('#bs-d')) return; T.bosses = T.bosses.filter(x => x.id !== b.id); saveT('bosses'); closeSheet(); openBoss(true); };
 }
 
-/* ---- Pets & Reittiere ---- */
+/* ---- Laufzeiten: Pets, Reittiere, Kostüme, Premium-Buffs ---- */
+const PET_KINDS = {pet:['🐾', 'Pet'], mount:['🐎', 'Reittier'], costume:['👘', 'Kostüm'], premium:['⭐', 'Premium-Buff']};
+const PREMIUM_TPL = ['Handschuh des Diebes', 'Autojagd', 'Erfahrungsring'];
+const kindIcon = k => (PET_KINDS[k] || PET_KINDS.pet)[0];
 function petLeft(p){ return p.until ? new Date(p.until).getTime() - Date.now() : null; }
 function petCard(){
   const soon = T.pets.filter(p => petLeft(p) != null && petLeft(p) < (remCfg('pet').days + 1) * 864e5).sort((a, b) => petLeft(a) - petLeft(b))[0];
-  return `<button class="row" data-tool="pets"><div class="ic">🐾</div><div class="mid"><b>Pets & Reittiere</b><small>${soon ? `${esc(soon.name)} ${petLeft(soon) > 0 ? 'läuft in ' + fmtDur(petLeft(soon)) + ' ab' : 'ist abgelaufen'}` : T.pets.length ? `${T.pets.length} eingetragen` : 'Level, Fähigkeiten, Laufzeit'}</small></div><div class="rt">›</div></button>`;
+  return `<button class="row" data-tool="pets"><div class="ic">⏳</div><div class="mid"><b>Laufzeiten</b><small>${soon ? `${kindIcon(soon.kind)} ${esc(soon.name)} ${petLeft(soon) > 0 ? 'läuft in ' + fmtDur(petLeft(soon)) + ' ab' : 'ist abgelaufen'}` : T.pets.length ? `${T.pets.length} eingetragen` : 'Pets, Reittiere, Kostüme, Premium-Buffs'}</small></div><div class="rt">›</div></button>`;
 }
 function openPets(fromHist){
   if(!fromHist) S.hist.push(f => openPets(f));
-  subPage({head:'<div style="font-size:26px">🐾</div><h1>Pets & Reittiere</h1>', body:`
-    ${T.pets.length ? T.pets.map(p => { const l = petLeft(p);
-      return `<button class="row" data-pet="${p.id}"><div class="ic">${p.kind === 'mount' ? '🐎' : '🐾'}</div><div class="mid"><b>${esc(p.name)}${p.level ? ` <span class="tag lv">Lv ${esc(p.level)}</span>` : ''}</b><small>${esc(p.skills || (p.kind === 'mount' ? 'Reittier' : 'Pet'))}</small>
-      ${l != null ? `<div style="font-size:12px;margin-top:2px;color:${l < 0 ? 'var(--bad)' : l < 864e5 ? 'var(--gold)' : 'var(--mute)'}">${l < 0 ? '⛔ abgelaufen' : `⏳ läuft ab in ${fmtDur(l)} · ${new Date(p.until).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr`}</div>` : ''}</div><div class="rt">›</div></button>`; }).join('') : '<div class="empty">Noch nichts eingetragen.</div>'}
-    <div class="btns"><button class="btn pri" id="pet-add">＋ Hinzufügen</button></div>
-    ${remRow('pet')}`});
+  const row = p => { const l = petLeft(p);
+    return `<button class="row" data-pet="${p.id}"><div class="ic">${kindIcon(p.kind)}</div><div class="mid"><b>${esc(p.name)}${p.level ? ` <span class="tag lv">Lv ${esc(p.level)}</span>` : ''}</b><small>${esc(p.skills || PET_KINDS[p.kind || 'pet'][1])}</small>
+      ${l != null ? `<div style="font-size:12px;margin-top:2px;color:${l < 0 ? 'var(--bad)' : l < 864e5 ? 'var(--gold)' : 'var(--mute)'}">${l < 0 ? '⛔ abgelaufen' : `⏳ noch <span data-until="${new Date(p.until).getTime()}" data-done="abgelaufen">${fmtClock(l)}</span> · bis ${new Date(p.until).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr`}</div>` : '<div style="font-size:12px;margin-top:2px;color:var(--mute)">läuft nicht ab</div>'}</div>
+      ${p.until && l != null ? `<span class="chip" data-renew="${p.id}" style="align-self:center">↻</span>` : ''}</button>`; };
+  const groups = Object.keys(PET_KINDS).map(k => [k, T.pets.filter(p => (p.kind || 'pet') === k).sort((a, b) => (petLeft(a) ?? 1e15) - (petLeft(b) ?? 1e15))]).filter(([, l]) => l.length);
+  subPage({head:'<div style="font-size:26px">⏳</div><h1>Laufzeiten</h1>', body:`
+    <p class="muted" style="margin:0 0 6px">Pets, Reittiere, Kostüme und Premium-Buffs mit Restzeit – die App erinnert dich vor dem Ablauf.</p>
+    ${groups.length ? groups.map(([k, l]) => `<h3>${PET_KINDS[k][0]} ${PET_KINDS[k][1]}${l.length > 1 ? 'e' : ''}</h3>` + l.map(row).join('')).join('') : '<div class="empty">Noch nichts eingetragen.</div>'}
+    <div class="tiles" style="grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px">${Object.entries(PET_KINDS).map(([k, [ic, t]]) => `<button class="tile" data-padd="${k}" style="padding:10px 4px;align-items:center;min-height:0"><div style="font-size:22px">${ic}</div><div class="ts" style="text-align:center">＋ ${t}</div></button>`).join('')}</div>
+    ${remRow('pet')}
+    <p class="muted" style="font-size:12px;margin-top:8px">Kurze Buffs (unter ${remCfg('pet').days} Tagen) erinnern dich 1 Stunde vorher und beim Ablauf. Mit ↻ trägst du nach dem Verlängern die neue Restzeit ein.</p>`});
   wireRem('#sub', () => scheduleReminders());
-  $$('#sub [data-pet]').forEach(x => x.onclick = () => petSheet(T.pets.find(p => p.id === x.dataset.pet)));
-  $('#pet-add').onclick = () => petSheet();
+  $$('#sub [data-pet]').forEach(x => x.onclick = e => { if(e.target.closest('[data-renew]')) return; petSheet(T.pets.find(p => p.id === x.dataset.pet)); });
+  $$('#sub [data-renew]').forEach(x => x.onclick = e => { e.stopPropagation(); const p = T.pets.find(y => y.id === x.dataset.renew); restSheet(p.name + ' verlängert', t => { p.until = t ? ymd(new Date(t)) + 'T' + hm(new Date(t)) : ''; saveT('pets'); openPets(true); }); });
+  $$('#sub [data-padd]').forEach(x => x.onclick = () => petSheet(null, x.dataset.padd));
 }
-function petSheet(p){
-  const isNew = !p; p = p || {id:uid(), kind:'pet', name:'', level:'', skills:'', until:''};
-  openSheet(`<h2>${isNew ? 'Pet / Reittier' : esc(p.name)}</h2>
-    <div class="seg" id="pt-k">${[['pet', '🐾 Pet'], ['mount', '🐎 Reittier']].map(([k, t]) => `<button data-k="${k}" class="${p.kind === k ? 'on' : ''}">${t}</button>`).join('')}</div>
-    <div class="two"><div><label class="f">Name</label><input type="text" id="pt-n" value="${esc(p.name)}" placeholder="z. B. Löwen-Reittier"></div><div style="flex:0 0 80px"><label class="f">Level</label><input type="text" id="pt-l" value="${esc(p.level)}"></div></div>
-    <label class="f">Fähigkeiten / Boni</label><textarea id="pt-s" placeholder="z. B. Monsterjäger 3, Berserker 2">${esc(p.skills)}</textarea>
-    <label class="f">Restliche Lebensdauer (wie im Spiel angezeigt)</label>${durFields('pt-r', p.until ? Math.max(0, Math.round((new Date(p.until).getTime() - Date.now()) / 60000)) : 0, true)}
+function petSheet(p, kind){
+  const isNew = !p; p = p || {id:uid(), kind:kind || 'pet', name:'', level:'', skills:'', until:''};
+  const ph = {pet:'z. B. Affen-Pet', mount:'z. B. Löwen-Reittier', costume:'z. B. Winterkostüm', premium:'z. B. Handschuh des Diebes'};
+  openSheet(`<h2>${isNew ? PET_KINDS[p.kind][0] + ' ' + PET_KINDS[p.kind][1] : esc(p.name)}</h2>
+    <div class="seg" id="pt-k">${Object.entries(PET_KINDS).map(([k, [ic, t]]) => `<button data-k="${k}" class="${p.kind === k ? 'on' : ''}">${ic} ${t.replace('Premium-Buff', 'Premium')}</button>`).join('')}</div>
+    <div id="pt-tpl" class="chips" style="margin-top:10px;${p.kind === 'premium' && isNew ? '' : 'display:none'}">${PREMIUM_TPL.map(t => `<button class="chip" data-tpl="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+    <div class="two"><div><label class="f">Name</label><input type="text" id="pt-n" value="${esc(p.name)}" placeholder="${ph[p.kind]}"></div><div style="flex:0 0 80px" id="pt-lv"><label class="f">Level</label><input type="text" id="pt-l" value="${esc(p.level)}"></div></div>
+    <label class="f">Fähigkeiten / Boni / Notiz</label><textarea id="pt-s" placeholder="z. B. Monsterjäger 3, Berserker 2">${esc(p.skills)}</textarea>
+    <label class="f">Restzeit (wie im Spiel angezeigt)</label>${(() => { const m = p.until ? Math.max(0, Math.round((new Date(p.until).getTime() - Date.now()) / 60000)) : 0, d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mi = m % 60;
+      return `<div class="two"><div><label class="f">Tage</label><input type="text" inputmode="numeric" id="pt-r-d" value="${d || ''}" placeholder="0"></div><div><label class="f">Stunden</label><input type="text" inputmode="numeric" id="pt-r-h" value="${h || ''}" placeholder="0"></div><div><label class="f">Minuten</label><input type="text" inputmode="numeric" id="pt-r-m" value="${mi || ''}" placeholder="0"></div></div>`; })()}
     <p class="muted" style="font-size:12px;margin:4px 0 0">Leer lassen, wenn es nicht abläuft.${p.until ? ` Aktuell: läuft ab am ${new Date(p.until).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr.` : ''}</p>
     <div class="btns"><button class="btn pri" id="pt-save">Speichern</button>${isNew ? '' : '<button class="btn del" id="pt-del">Löschen</button>'}</div>`);
-  $$('#pt-k button').forEach(b => b.onclick = () => { p.kind = b.dataset.k; $$('#pt-k button').forEach(x => x.classList.toggle('on', x === b)); });
+  const kindUI = () => { $('#pt-tpl').style.display = p.kind === 'premium' ? '' : 'none'; $('#pt-lv').style.display = p.kind === 'premium' || p.kind === 'costume' ? 'none' : ''; $('#pt-n').placeholder = ph[p.kind]; };
+  $$('#pt-k button').forEach(b => b.onclick = () => { p.kind = b.dataset.k; $$('#pt-k button').forEach(x => x.classList.toggle('on', x === b)); kindUI(); });
+  $$('#pt-tpl [data-tpl]').forEach(b => b.onclick = () => { $('#pt-n').value = b.dataset.tpl; });
+  kindUI();
   $('#pt-save').onclick = () => { p.name = $('#pt-n').value.trim(); p.level = $('#pt-l').value.trim(); p.skills = $('#pt-s').value.trim(); { const m = readDur('pt-r'); p.until = m ? ymd(new Date(Date.now() + m * 60000)) + 'T' + hm(new Date(Date.now() + m * 60000)) : ''; } if(!p.name){ toast('Bitte einen Namen eingeben'); return; } if(isNew) T.pets.push(p); saveT('pets'); closeSheet(); openPets(true); };
   if(!isNew) $('#pt-del').onclick = () => { if(!confirmTwice('#pt-del')) return; T.pets = T.pets.filter(x => x.id !== p.id); saveT('pets'); closeSheet(); openPets(true); };
 }
@@ -1578,9 +1614,11 @@ function openMap(name, fromHist){
     ${lv ? `<p class="muted" style="margin:0 0 6px">Grün = passt zu deinem Level ${lv} (EXP und Drops bis 15 Level Unterschied).</p>` : ''}
     ${list.map(e => `<button class="row" data-e="${esc(e.n)}"><div class="ic">${entryIcon(e)}</div><div class="mid"><b>${esc(e.n)}</b><small>${esc([e.r, e.el].filter(Boolean).join(' · ') || (e.t === 'metin' ? 'Metin' : ''))}${e.d ? ` · ${Object.values(e.d).flat().length} Drops` : ''}</small></div><div class="rt">${e.lv ? `<span class="tag ${lv && Math.abs(e.lv - lv) <= 15 ? 'cheap' : 'lv'}">Lv ${e.lv}</span>` : ''}</div></button>`).join('')}
     ${top.length ? `<div class="dcat">🎁 Was hier droppt</div><div class="ilist">${top.map(([n, c]) => `<button data-i="${esc(n)}">${esc(n)}${c > 1 ? ` <b style="color:var(--mute)">${c}×</b>` : ''}</button>`).join('')}</div>` : ''}
+    ${libPage(name) ? `<button class="row" data-lib="${esc(libPage(name).p)}" style="margin-top:12px"><div class="ic">📖</div><div class="mid"><b>Wiki-Seite zu ${esc(name)}</b><small>${esc(libPage(name).s.slice(0, 70))}</small></div><div class="rt">›</div></button>` : ''}
     <div class="dcat">📝 Deine Notizen</div><textarea id="map-note" placeholder="z. B. guter Spot links vom Tempel, CH 3 meist leer">${esc(notes[name] || '')}</textarea>`});
   $$('#sub [data-e]').forEach(b => b.onclick = () => openEntry(b.dataset.e));
   $$('#sub [data-i]').forEach(b => b.onclick = () => openItem(b.dataset.i));
+  $$('#sub [data-lib]').forEach(b => b.onclick = () => openLib(b.dataset.lib));
   $('#map-note').onchange = e => { notes[name] = e.target.value.trim(); if(!notes[name]) delete notes[name]; store('m2_mapnotes', notes); autoBackup(); srvSchedule(); };
 }
 
@@ -1620,9 +1658,11 @@ function toolReminders(now){
   const rb = remCfg('bio'), rs = remCfg('skill'), rp = remCfg('pet');
   if(rb.on && T.bio.item && T.bio.have < T.bio.need && bioNext() > now){ const at = bioNext() - rb.lead * 60000; add('bio' + bioNext(), at, rb.lead ? `🧪 Biologe in ${rb.lead} Min bereit` : '🧪 Biologe wartet', `Du kannst ${rb.lead ? 'gleich' : 'jetzt'} wieder ${T.bio.item} abgeben (${T.bio.have}/${T.bio.need})`); }
   T.bosses.forEach(b => { if(b.killed) add('boss' + b.id + b.killed, b.killed + b.respawn * 60000, `👹 ${b.name} ist wieder da`, (b.map ? b.map + ' · ' : '') + 'Respawn-Zeit ist um'); });
-  if(rp.on) T.pets.forEach(p => { if(!p.until) return; const u = new Date(p.until).getTime(), ic = p.kind === 'mount' ? '🐎' : '🐾';
-    add('petd' + p.id + p.until + rp.days, u - rp.days * 864e5, `${ic} ${p.name} läuft in ${rp.days === 1 ? 'einem Tag' : rp.days + ' Tagen'} ab`, `Am ${new Date(u).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr – rechtzeitig verlängern oder füttern`, 400);
-    if(rp.h1) add('peth' + p.id + p.until, u - 3600e3, `${ic} ${p.name} läuft in 1 Stunde ab`, 'Jetzt noch verlängern oder füttern', 400); });
+  if(rp.on) T.pets.forEach(p => { if(!p.until) return; const u = new Date(p.until).getTime(), ic = kindIcon(p.kind), what = p.kind === 'pet' || p.kind === 'mount' ? 'verlängern oder füttern' : 'verlängern';
+    const short = u - now < rp.days * 864e5;
+    if(!short) add('petd' + p.id + p.until + rp.days, u - rp.days * 864e5, `${ic} ${p.name} läuft in ${rp.days === 1 ? 'einem Tag' : rp.days + ' Tagen'} ab`, `Am ${new Date(u).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr – rechtzeitig ${what}`, 400);
+    if(rp.h1 || short) add('peth' + p.id + p.until, u - 3600e3, `${ic} ${p.name} läuft in 1 Stunde ab`, `Jetzt noch ${what}`, 400);
+    if(p.kind === 'premium' || p.kind === 'costume' || short) add('pete' + p.id + p.until, u, `${ic} ${p.name} ist abgelaufen`, `Neu aktivieren oder ${what}?`, 400); });
   if(rs.on) T.skills.forEach(s => { const n = skillNext(s); if(n > now && s.stage >= 20 && s.stage < 40) add('sk' + s.id + n, n - rs.lead * 60000, `📘 ${s.name}: ${s.stage < 30 ? 'Buch' : 'Seelenstein'} ${rs.lead ? 'in ' + rs.lead + ' Min ' : ''}lesbar`, `Stufe ${stageName(s.stage)} – nächster Leseversuch ${rs.lead ? 'gleich' : 'jetzt'} möglich`); });
   const m = moonNext(); if(m && T.moon.remind !== false) add('moon' + m.ds, m.start - 30 * 60000, '🌙 Mondlicht-Abend in 30 Min', T.moon.list.join(' · '));
   const w = S.off && S.off.wartung; if(w && w.naechste && S.cfg.bgWartung !== false){ const st = new Date(w.naechste).getTime(); add('wart' + w.naechste, st - 30 * 60000, '🛠️ Wartung in 30 Minuten', `Ab ${w.naechste.slice(11, 16)} Uhr sind die Server offline`); }
@@ -1633,6 +1673,99 @@ function toolReminders(now){
 function syncBgPrefs(){
   const P = plug('Preferences'); if(!P) return;
   P.set({key:'m2_bg', value:JSON.stringify({plan:S.cfg.bgPlan !== false, wartung:S.cfg.bgWartung !== false, events:S.cfg.newsNotify !== false, news:S.cfg.bgNews !== false})}).catch(() => {});
+}
+
+/* ================= Wiki-Bibliothek: Themen-Seiten (Alchemie, Systeme, Klassen, Quests, Maps …) ================= */
+const LIB_IDX = 'https://raw.githubusercontent.com/MrDocMoris/Metin2-Multiversum/main/daten/seiten.json';
+const LIB_PAGE = 'https://raw.githubusercontent.com/MrDocMoris/Metin2-Multiversum/main/daten/seiten/';
+const LIB_GROUPS = [['Aktuell', '📣'], ['Klassen', '⚔️'], ['Fähigkeiten', '🎣'], ['Ausrüstung', '💍'], ['Systeme', '⚙️'], ['Übersichten', '📚'], ['Maps', '🗺️'], ['Allgemein', 'ℹ️']];
+const LIB = {idx:store('m2_libidx') || null, byPage:null, favs:store('m2_libfav') || [], recent:store('m2_librecent') || []};
+function libPrep(){ LIB.byPage = new Map(((LIB.idx && LIB.idx.seiten) || []).map(e => [e.p.toLowerCase(), e])); (LIB.idx && LIB.idx.seiten || []).forEach(e => { e._k = (e.t + ' ' + (e.h || []).join(' ') + ' ' + e.s).toLowerCase(); }); }
+libPrep();
+async function refreshLib(manual){
+  const last = store('m2_libcheck');
+  if(!manual && LIB.idx && last && Date.now() - last < 864e5) return;
+  try{
+    const r = await fetch(LIB_IDX + '?t=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) throw new Error(r.status === 404 ? 'Die Wiki-Bibliothek wird gerade erstellt' : 'Fehler ' + r.status);
+    const d = await r.json(); store('m2_libcheck', Date.now());
+    const changed = !LIB.idx || LIB.idx.stand !== d.stand;
+    LIB.idx = d; libPrep(); store('m2_libidx', d);
+    if(changed) renderWikiIfOpen();
+    if(manual) toast(`📚 ${d.seiten.length} Wiki-Seiten verfügbar`);
+  }catch(e){ if(manual) toast(e.message && !/fetch/i.test(e.message) ? e.message : 'Keine Verbindung'); }
+}
+const libPage = name => LIB.byPage && LIB.byPage.get(String(name || '').replace(/ /g, '_').toLowerCase()) || (LIB.byPage && LIB.byPage.get(String(name || '').toLowerCase()));
+// Seiten-Inhalt laden: erst Speicher, dann Netz (die letzten 40 Seiten bleiben offline verfügbar)
+async function libLoad(e){
+  const key = 'm2_lib_' + e.id, cached = store(key);
+  if(cached && cached.stand === (LIB.idx && LIB.idx.stand)) return cached;
+  try{
+    const r = await fetch(LIB_PAGE + e.id + '.json?v=' + encodeURIComponent((LIB.idx && LIB.idx.stand) || ''));
+    if(!r.ok) throw new Error('Fehler ' + r.status);
+    const d = await r.json(); d.stand = LIB.idx && LIB.idx.stand;
+    const keys = (store('m2_libcache') || []).filter(k => k !== key); keys.push(key);
+    while(keys.length > 40) try{ localStorage.removeItem(keys.shift()); }catch(x){}
+    store('m2_libcache', keys);
+    try{ store(key, d); }catch(x){ /* Speicher voll: nur anzeigen */ }
+    return d;
+  }catch(err){ if(cached) return cached; throw err; }
+}
+function libList(list){
+  return list.map(e => `<button class="row" data-lib="${esc(e.p)}"><div class="ic">${(LIB_GROUPS.find(g => g[0] === e.g) || ['', '📄'])[1]}</div><div class="mid"><b>${esc(e.t)}${LIB.favs.includes(e.p) ? ' ⭐' : ''}</b><small>${esc(e.s.slice(0, 90))}</small></div></button>`).join('');
+}
+function renderLibHome(){
+  const el = $('#w-res');
+  if(!LIB.idx){ el.innerHTML = `<div class="empty">Die Wiki-Bibliothek ist noch nicht geladen.<br><br><button class="btn pri" id="lib-load" style="max-width:240px">Jetzt laden</button></div>`; $('#lib-load').onclick = () => refreshLib(true); return; }
+  const all = LIB.idx.seiten, fav = all.filter(e => LIB.favs.includes(e.p)), rec = LIB.recent.map(p => libPage(p)).filter(Boolean).slice(0, 5);
+  el.innerHTML = `${fav.length ? '<h3 style="margin-top:0">⭐ Favoriten</h3>' + libList(fav) : ''}${rec.length ? '<h3>🕘 Zuletzt gelesen</h3>' + libList(rec) : ''}
+    <h3${fav.length || rec.length ? '' : ' style="margin-top:0"'}>📚 Themen</h3>
+    <div class="tiles">${LIB_GROUPS.map(([g, ic]) => { const n = all.filter(e => e.g === g).length; return n ? `<button class="tile" data-lgrp="${g}"><div class="ti" style="background:var(--panel2)">${ic}</div><div class="tt">${g}</div><div class="ts">${n} Seiten</div></button>` : ''; }).join('')}</div>
+    <p class="muted" style="font-size:12px;margin-top:10px">Aus dem offiziellen Metin2-Wiki · Stand ${fmtDate(LIB.idx.stand)} · gelesene Seiten bleiben offline verfügbar</p>`;
+  $$('#w-res [data-lgrp]').forEach(b => b.onclick = () => openLibGroup(b.dataset.lgrp));
+  $$('#w-res [data-lib]').forEach(b => b.onclick = () => openLib(b.dataset.lib));
+}
+function openLibGroup(g, fromHist){
+  if(!fromHist) S.hist.push(f => openLibGroup(g, f));
+  const list = LIB.idx.seiten.filter(e => e.g === g).sort((a, b) => a.t.localeCompare(b.t, 'de'));
+  subPage({head:`<div style="font-size:26px">${(LIB_GROUPS.find(x => x[0] === g) || ['', '📚'])[1]}</div><h1>${esc(g)}</h1>`, body:`<div class="sbox"><input type="text" id="lg-q" placeholder="In „${esc(g)}“ suchen …"></div><div id="lg-res">${libList(list)}</div>`});
+  const wire = () => $$('#lg-res [data-lib]').forEach(b => b.onclick = () => openLib(b.dataset.lib));
+  $('#lg-q').oninput = e => { const q = e.target.value.trim().toLowerCase(); $('#lg-res').innerHTML = libList(list.filter(x => !q || x._k.includes(q))) || '<div class="empty">Nichts gefunden.</div>'; wire(); };
+  wire();
+}
+async function openLib(page, fromHist){
+  const e = libPage(page);
+  if(!e){ openUrl(WIKI_BASE + encodeURIComponent(page)); return; }
+  if(!fromHist) S.hist.push(f => openLib(page, f));
+  LIB.recent = [e.p, ...LIB.recent.filter(p => p !== e.p)].slice(0, 12); store('m2_librecent', LIB.recent);
+  const head = () => `<div style="font-size:26px">${(LIB_GROUPS.find(x => x[0] === e.g) || ['', '📄'])[1]}</div><h1>${esc(e.t)}</h1><button class="chip${LIB.favs.includes(e.p) ? ' on' : ''}" id="lib-fav">⭐</button>`;
+  subPage({head:head(), body:`<div class="empty">Lade Seite …</div>`});
+  let d;
+  try{ d = await libLoad(e); }
+  catch(err){ if(S.hist[S.hist.length - 1] && S.view === 'sub') $('#sub').querySelector('.empty').innerHTML = 'Seite konnte nicht geladen werden – bist du online?<br><br><button class="btn" id="lib-web" style="max-width:220px">Im Wiki öffnen</button>'; if($('#lib-web')) $('#lib-web').onclick = () => openUrl(WIKI_BASE + encodeURIComponent(e.p)); return; }
+  if(S.view !== 'sub') return;
+  const heads = e.h && e.h.length > 3 ? `<div class="chips" style="margin-bottom:10px">${e.h.slice(0, 12).map((h, i) => `<button class="chip" data-jump="${i}">${esc(h)}</button>`).join('')}</div>` : '';
+  const body = $('#sub'); const sc = 0;
+  body.innerHTML = body.innerHTML.replace(/<div class="empty">Lade Seite …<\/div>/, '') ;
+  body.insertAdjacentHTML('beforeend', `${heads}<div class="wikic">${d.html}</div>
+    <div class="btns"><button class="btn" id="lib-web">Im Wiki öffnen</button></div><p class="muted" style="font-size:12px">Quelle: offizielles Metin2-Wiki (Gameforge)</p>`);
+  $('#sub-back').onclick = goBack;
+  $('#v-sub').scrollTop = sc;
+  // Tabellen scrollbar machen
+  $$('#sub .wikic table').forEach(t => { if(!t.parentElement.classList.contains('tw')){ const w = document.createElement('div'); w.className = 'tw'; t.before(w); w.appendChild(t); } });
+  $$('#sub .wikic [data-w]').forEach(a => a.onclick = ev => { ev.preventDefault(); const p = a.dataset.w, n = p.replace(/_/g, ' ');
+    if(libPage(p)) openLib(p); else if(wikiEntry(n)) openEntry(n); else if(wikiItem(n)) openItem(n); else if(mapIndex().has(n)) openMap(n); else openUrl(WIKI_BASE + encodeURIComponent(p)); });
+  $$('#sub .wikic a[href]').forEach(a => a.onclick = ev => { ev.preventDefault(); openUrl(a.href); });
+  $$('#sub [data-jump]').forEach(b => b.onclick = () => { const hs = $$('#sub .wikic h2, #sub .wikic h3'); const h = hs[+b.dataset.jump]; if(h) h.scrollIntoView({behavior:'smooth', block:'start'}); });
+  $('#lib-fav').onclick = () => { LIB.favs = LIB.favs.includes(e.p) ? LIB.favs.filter(p => p !== e.p) : [...LIB.favs, e.p]; store('m2_libfav', LIB.favs); $('#lib-fav').classList.toggle('on', LIB.favs.includes(e.p)); toast(LIB.favs.includes(e.p) ? '⭐ Zu Favoriten hinzugefügt' : 'Aus Favoriten entfernt'); };
+  $('#lib-web').onclick = () => openUrl(WIKI_BASE + encodeURIComponent(e.p));
+}
+// Treffer aus der Bibliothek für die allgemeine Wiki-Suche
+function libSearch(q, max = 12){
+  if(!LIB.idx || !q) return [];
+  const t = [], h = [];
+  for(const e of LIB.idx.seiten){ const tl = e.t.toLowerCase(); if(tl.includes(q)) t.push(e); else if(e._k.includes(q)) h.push(e); }
+  return t.concat(h).slice(0, max);
 }
 
 /* ================= Sync über den eigenen Server (PocketBase, wie bei TCG Multiversum) ================= */
