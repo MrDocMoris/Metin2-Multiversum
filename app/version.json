@@ -1,7 +1,7 @@
 {
-  "build": 3,
-  "version": "1.3",
-  "size": 5531415,
-  "apk": "https://github.com/MrDocMoris/Metin2-Multiversum/releases/download/v1.3/Metin2-Multiversum.apk",
-  "notes": "Forum-Events: deutsche Zeit, Events ohne Startdatum"
+  "build": 4,
+  "version": "1.4",
+  "size": 5943745,
+  "apk": "https://github.com/MrDocMoris/Metin2-Multiversum/releases/download/v1.4/Metin2-Multiversum.apk",
+  "notes": "Alle gespeicherten Ideen: Kalender, Mondlicht-Abend, Tages-Checkliste, Biologe, Pets, Fertigkeiten, Boss-Timer, Maps, Wartung, Serverstatus, Neuigkeiten, Hintergrund-Meldungen, Server-Sync"
 }
