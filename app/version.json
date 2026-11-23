@@ -1,7 +1,7 @@
 {
-  "build": 2,
-  "version": "1.2",
-  "size": 5531403,
-  "apk": "https://github.com/MrDocMoris/Metin2-Multiversum/releases/download/v1.2/Metin2-Multiversum.apk",
-  "notes": "Events aus dem offiziellen Forum: Ruby-Wochenplan, Zusatz-Events, Änderungen und große Events mit Erinnerung"
+  "build": 3,
+  "version": "1.3",
+  "size": 5531415,
+  "apk": "https://github.com/MrDocMoris/Metin2-Multiversum/releases/download/v1.3/Metin2-Multiversum.apk",
+  "notes": "Forum-Events: deutsche Zeit, Events ohne Startdatum"
 }
