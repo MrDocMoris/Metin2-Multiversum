@@ -1,7 +1,7 @@
 {
-  "build": 5,
-  "version": "1.5",
-  "size": 5946305,
-  "apk": "https://github.com/MrDocMoris/Metin2-Multiversum/releases/download/v1.5/Metin2-Multiversum.apk",
-  "notes": "Biologe & Fertigkeiten: eigene Wartezeiten, Restzeit aus dem Spiel, Exorzismus, Live-Countdown; einstellbare Erinnerungen, Pets standardmäßig 2 Tage vorher"
+  "build": 6,
+  "version": "1.6",
+  "size": 5951524,
+  "apk": "https://github.com/MrDocMoris/Metin2-Multiversum/releases/download/v1.6/Metin2-Multiversum.apk",
+  "notes": "Wiki-Bibliothek (Alchemie, Systeme, Klassen, Quests, Maps …) und Laufzeiten für Kostüme & Premium-Buffs"
 }
