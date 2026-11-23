@@ -1,0 +1,41 @@
+name: Event-Termine aus dem Forum holen
+
+on:
+  schedule:
+    - cron: "37 5 * * *"    # jeden Morgen
+    - cron: "37 15 * * *"   # und nachmittags (kurzfristige Änderungen)
+  push:
+    branches: [main]
+    paths:
+      - tools/events.py
+      - .github/workflows/events.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: events
+  cancel-in-progress: true
+
+jobs:
+  events:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests beautifulsoup4
+      - name: Eventkalender und News aus dem Forum lesen
+        run: python tools/events.py
+      - name: Speichern, falls geändert
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add daten/
+          if git diff --cached --quiet; then echo "Keine Änderungen"; exit 0; fi
+          git commit -m "Event-Termine aktualisiert"
+          git pull --rebase origin main
+          git push

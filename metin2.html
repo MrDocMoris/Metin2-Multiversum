@@ -287,10 +287,11 @@ textarea{min-height:64px;resize:vertical}
   <div id="recent"></div>
 </div></section>
 <section class="view" id="v-events"><div class="pad">
-  <div class="hero" style="margin-bottom:14px"><div style="flex:1;min-width:0"><h1>Events</h1><div class="sub">Erinnerung kommt als Push – auch wenn die App zu ist</div></div></div>
-  <h3 style="margin-top:0">Nächste Termine</h3>
+  <div class="hero" style="margin-bottom:14px"><div style="flex:1;min-width:0"><h1>Events</h1><div class="sub">Aus dem offiziellen Forum – mit Push-Erinnerung</div></div></div>
+  <div id="evoff"></div>
+  <h3>Eigene Termine</h3>
   <div id="evnext"></div>
-  <h3>Alle Events</h3>
+  <h3>Alle eigenen Events</h3>
   <div id="evall"></div>
 </div></section>
 <section class="view" id="v-farm"><div class="pad" id="farm"></div></section>
@@ -319,6 +320,7 @@ const APP_BUILD = 0; // wird beim Bauen der APK durch die Build-Nummer ersetzt
 const UPDATE_INFO = 'https://raw.githubusercontent.com/MrDocMoris/Metin2-Multiversum/main/app/version.json';
 const WIKI_INFO = 'https://raw.githubusercontent.com/MrDocMoris/Metin2-Multiversum/main/daten/wiki.json';
 const WIKI_BASE = 'https://de-wiki.metin2.gameforge.com/index.php/';
+const OFF_INFO = 'https://raw.githubusercontent.com/MrDocMoris/Metin2-Multiversum/main/daten/events.json';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -341,7 +343,8 @@ function openUrl(url){ if(NATIVE) plug('Browser').open({url}).catch(() => { loca
 
 /* ================= Daten (offline, auf dem Gerät) ================= */
 const S = {
-  cfg: Object.assign({char:'', cls:'Schamane', lvl:'', server:'Ruby', notify:true, remind:15}, store('m2_cfg') || {}),
+  cfg: Object.assign({char:'', cls:'Schamane', lvl:'', server:'Ruby', notify:true, remind:15, offNotify:'fav', offFav:[], newsNotify:true}, store('m2_cfg') || {}),
+  off: store('m2_off') || null, // Event-Termine aus dem offiziellen Forum
   events: store('m2_events') || [],
   drops: store('m2_drops') || [],
   sessions: store('m2_sessions') || [],
@@ -458,6 +461,112 @@ function suggest(input, kind, onPick){
   input.addEventListener('blur', () => setTimeout(() => box.classList.remove('on'), 200));
 }
 
+/* ================= Offizielle Events (Forum: Eventkalender & News) ================= */
+async function refreshOff(manual){
+  try{
+    const r = await fetch(OFF_INFO + '?t=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) throw new Error(r.status === 404 ? 'Noch keine Forum-Daten im Repo' : 'Fehler ' + r.status);
+    const d = await r.json();
+    store('m2_offcheck', Date.now());
+    const changed = !S.off || d.stand !== S.off.stand;
+    S.off = d; store('m2_off', d);
+    if(changed){ scheduleReminders(); renderAll(); }
+    if(manual) toast(changed ? '📅 Event-Termine aktualisiert' : 'Event-Termine sind aktuell');
+  }catch(e){ if(manual) toast(e.message && !/fetch/i.test(e.message) ? e.message : 'Keine Verbindung'); }
+}
+function maybeRefreshOff(){ const t = store('m2_offcheck'); if(!t || Date.now() - t > 3 * 3600e3) refreshOff(false); }
+// Wochenplan des eigenen Servers (Name aus den Einstellungen, sonst Ruby)
+function myPlan(){
+  const pl = (S.off && S.off.plaene) || [], q = (S.cfg.server || 'Ruby').toLowerCase();
+  return pl.find(p => p.server.toLowerCase().includes('[' + q) || p.server.toLowerCase().includes(q)) || pl.find(p => /ruby/i.test(p.server)) || null;
+}
+const atTime = (ds, t) => { const [h, m] = t.split(':').map(Number); const d = parse(ds); d.setHours(h, m, 0, 0); return d.getTime(); };
+const isFav = name => S.cfg.offFav.some(f => f.toLowerCase() === String(name).toLowerCase());
+function toggleFav(name){
+  if(isFav(name)) S.cfg.offFav = S.cfg.offFav.filter(f => f.toLowerCase() !== name.toLowerCase());
+  else S.cfg.offFav.push(name);
+  saveCfg(); toast(isFav(name) ? `🔔 Erinnerung für „${name}“ an` : `🔕 Erinnerung für „${name}“ aus`);
+  if(isFav(name) && NATIVE) askNotify(false);
+}
+const offWanted = name => S.cfg.offNotify === 'all' || (S.cfg.offNotify === 'fav' && isFav(name));
+// Termine aus dem Forum für die nächsten n Tage: {e:{id,name,icon,start,end,note}, ds, start, end, hasEnd, off:true}
+function offOccurrences(days = 7, fromDs){
+  const out = [], now = Date.now(), t0 = fromDs || addDays(todayStr(), -1), plan = myPlan();
+  if(plan) for(let i = 0; i <= days; i++){
+    const ds = addDays(t0, i);
+    (plan.woche[String(wdOf(ds))] || []).forEach(x => {
+      const st = atTime(ds, x.von), en = x.bis === '24:00' ? atTime(addDays(ds, 1), '00:00') : atTime(ds, x.bis);
+      if(en > now) out.push({off:'drop', ds, start:st, end:en, hasEnd:true, e:{id:'off-' + x.name, icon:'🎁', name:x.name, start:x.von, end:x.bis === '24:00' ? '00:00' : x.bis, note:'Drop von Bossen und Steinen'}});
+    });
+    (plan.extra || []).filter(x => x.datum === ds).forEach(x => {
+      const st = atTime(ds, x.von), en = x.bis === '24:00' ? atTime(addDays(ds, 1), '00:00') : atTime(ds, x.bis);
+      if(en > now) out.push({off:'extra', ds, start:st, end:en, hasEnd:true, e:{id:'offx-' + x.name, icon:'⛏️', name:x.name, start:x.von, end:x.bis, note:'Zusätzliches Event'}});
+    });
+  }
+  ((S.off && S.off.news) || []).forEach(n => {
+    const st = n.start ? new Date(n.start).getTime() : null, en = n.ende ? new Date(n.ende).getTime() : null;
+    if((en || st) < now) return;
+    out.push({off:'news', ds:(n.start || n.ende).slice(0, 10), start:st || now, end:en || (st + 3600e3), hasEnd:!!en, e:{id:'news-' + n.name, icon:'🎉', name:n.name, start:(n.start || '').slice(11, 16), end:(n.ende || '').slice(11, 16), note:n.thread, url:n.url}});
+  });
+  return out.sort((a, b) => a.start - b.start);
+}
+function nowOnServer(){
+  const plan = myPlan(); if(!plan) return null;
+  const t = todayStr(), list = plan.woche[String(wdOf(t))] || [], now = Date.now();
+  const i = list.findIndex(x => atTime(t, x.von) <= now && now < (x.bis === '24:00' ? atTime(addDays(t, 1), '00:00') : atTime(t, x.bis)));
+  return {plan, list, cur:i >= 0 ? list[i] : null, next:i >= 0 ? list[i + 1] : list.find(x => atTime(t, x.von) > now)};
+}
+const shortServer = s => (s || '').replace(/\s*\/.*$/, '').replace(/[\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+function slotRow(x, ds){
+  const t = todayStr(), now = Date.now();
+  const st = atTime(ds, x.von), en = x.bis === '24:00' ? atTime(addDays(ds, 1), '00:00') : atTime(ds, x.bis);
+  const live = ds === t && st <= now && now < en, past = en <= now;
+  const it = wikiItem(x.name);
+  return `<div class="ev${live ? ' live' : ''}" style="${past ? 'opacity:.45' : ''}"><div class="tm">${x.von}<small>bis ${x.bis === '24:00' ? '24:00' : x.bis}</small></div>
+    <button class="mid" style="text-align:left" data-oi="${esc(x.name)}"><div class="nm">${esc(x.name)}${live ? ' <span class="tag cheap">läuft</span>' : ''}</div><div class="meta">${live ? 'noch ' + fmtDur(en - now) : past ? 'vorbei' : ds === t ? 'in ' + fmtDur(st - now) : 'Drop von Bossen und Steinen'}${it ? ' · im Wiki ›' : ''}</div></button>
+    <button class="chip${isFav(x.name) ? ' on' : ''}" data-fav="${esc(x.name)}" aria-label="Erinnerung" style="align-self:center">${isFav(x.name) ? '🔔' : '🔕'}</button></div>`;
+}
+function renderOff(){
+  const el = $('#evoff'); if(!el) return;
+  if(!S.off){ el.innerHTML = `<div class="hint">📡 <span>Die Termine aus dem offiziellen Forum werden geladen …</span></div>`; return; }
+  const plan = myPlan(), t = todayStr();
+  let h = '';
+  const hin = (S.off.hinweise || []);
+  hin.forEach(x => { h += `<div class="hint warn" style="margin-bottom:8px">⚠️ <span><b>Änderung laut Forum</b> (${new Date(x.datum).toLocaleDateString('de-DE')}): ${esc(x.text)}</span></div>`; });
+  const news = (S.off.news || []).filter(n => new Date(n.ende || n.start).getTime() > Date.now());
+  if(news.length){
+    h += `<h3 style="margin-top:0">🎉 Große Events</h3>` + news.map(n => { const st = n.start ? new Date(n.start) : null, en = n.ende ? new Date(n.ende) : null, live = st && st.getTime() <= Date.now();
+      return `<button class="ev${live ? ' live' : ''}" data-url="${esc(n.url)}"><div class="ic">🎉</div><div class="mid"><div class="dt">${live ? 'läuft' + (en ? ' noch ' + fmtDur(en - Date.now()) : '') : 'startet in ' + fmtDur(st - Date.now())}</div><div class="nm">${esc(n.name)}</div>
+      <div class="meta">${st ? st.toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'}) : ''}${en ? ' – ' + en.toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'}) : ''} · Forum ›</div></div></button>`; }).join('');
+  }
+  if(plan){
+    const today = plan.woche[String(wdOf(t))] || [];
+    const extraToday = (plan.extra || []).filter(x => x.datum === t);
+    h += `<h3${news.length ? '' : ' style="margin-top:0"'}>📅 Heute auf ${esc(shortServer(plan.server))}</h3>` + today.map(x => slotRow(x, t)).join('') + extraToday.map(x => slotRow(x, t)).join('');
+    const nextExtra = (plan.extra || []).filter(x => x.datum > t).slice(0, 3);
+    if(nextExtra.length) h += `<h3>⛏️ Zusätzliche Events</h3>` + nextExtra.map(x => `<div class="ev"><div class="tm">${fmtDay(x.datum)}<small>${x.von}–${x.bis}</small></div><div class="mid"><div class="nm">${esc(x.name)}</div></div><button class="chip${isFav(x.name) ? ' on' : ''}" data-fav="${esc(x.name)}" style="align-self:center">${isFav(x.name) ? '🔔' : '🔕'}</button></div>`).join('');
+    h += `<button class="row" id="off-week" style="margin-top:4px"><div class="ic">🗓️</div><div class="mid"><b>Wochenplan ansehen</b><small>${esc(plan.server)}</small></div><div class="rt">›</div></button>`;
+    h += `<p class="muted" style="font-size:12px;margin:4px 2px 0">🔔 = Push ${S.cfg.remind ? S.cfg.remind + ' Min vorher' : 'beim Start'} · ${S.cfg.offNotify === 'all' ? 'Erinnerung für alle Drop-Events an' : S.cfg.offNotify === 'off' ? 'Erinnerungen für Forum-Events aus (Einstellungen)' : 'Tippe 🔕 bei den Drops, die dich interessieren'} · Stand ${S.off.stand ? new Date(S.off.stand).toLocaleString('de-DE', {day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'}) : '–'}</p>`;
+  } else h += `<div class="hint">🔎 <span>Für „${esc(S.cfg.server)}“ steht im Eventkalender gerade kein Wochenplan. Server-Name in den Einstellungen prüfen.</span></div>`;
+  el.innerHTML = h;
+  $$('#evoff [data-fav]').forEach(b => b.onclick = e => { e.stopPropagation(); toggleFav(b.dataset.fav); renderOff(); });
+  $$('#evoff [data-oi]').forEach(b => b.onclick = () => { if(wikiItem(b.dataset.oi)) openItem(b.dataset.oi); });
+  $$('#evoff [data-url]').forEach(b => b.onclick = () => openUrl(b.dataset.url));
+  if($('#off-week')) $('#off-week').onclick = weekSheet;
+}
+function weekSheet(){
+  const plan = myPlan(); if(!plan) return;
+  const today = wdOf(todayStr());
+  const order = [0, 1, 2, 3, 4, 5, 6].map(i => (today + i) % 7);
+  openSheet(`<h2>Wochenplan</h2><p class="muted" style="margin:0 0 8px">${esc(plan.server)} · aus dem Eventkalender im Forum</p>
+    ${order.map(i => { const ds = addDays(todayStr(), (i - today + 7) % 7); return `<h3>${i === today ? 'Heute' : WD[i] + ', ' + parse(ds).getDate() + '.' + (parse(ds).getMonth() + 1) + '.'}</h3>` + (plan.woche[String(i)] || []).map(x => slotRow(x, ds)).join(''); }).join('')}
+    <div class="btns"><button class="btn" id="wk-all">${S.cfg.offNotify === 'all' ? '🔕 Nur markierte erinnern' : '🔔 An alle erinnern'}</button><button class="btn" id="wk-forum">Im Forum öffnen</button></div>`);
+  $$('#sheet [data-fav]').forEach(b => b.onclick = () => { toggleFav(b.dataset.fav); const sc = $('#sheet').scrollTop; weekSheet(); $('#sheet').scrollTop = sc; renderOff(); });
+  $$('#sheet [data-oi]').forEach(b => b.onclick = () => { if(wikiItem(b.dataset.oi)){ closeSheet(); openItem(b.dataset.oi); } });
+  $('#wk-all').onclick = () => { S.cfg.offNotify = S.cfg.offNotify === 'all' ? 'fav' : 'all'; saveCfg(); weekSheet(); renderOff(); toast(S.cfg.offNotify === 'all' ? '🔔 Erinnerung für alle Drop-Events' : 'Nur noch markierte Drops'); if(NATIVE) askNotify(false); };
+  $('#wk-forum').onclick = () => openUrl(S.off.quelle);
+}
+
 /* ================= Events ================= */
 const EV_TEMPLATES = [
   ['⭐', 'EXP-Event'], ['💰', 'Yang-Event'], ['🎁', 'Drop-Event'], ['🍀', 'Happy Hour'], ['🪨', 'Metin-Fieber'], ['👹', 'Boss-Event'],
@@ -510,8 +619,9 @@ function evRow(o, full){
     ${full && e.note ? `<div class="note">${esc(e.note)}</div>` : ''}</div></button>`;
 }
 function renderEvents(){
+  renderOff();
   const occ = occurrences(10).slice(0, 8);
-  $('#evnext').innerHTML = occ.length ? occ.map(o => evRow(o, true)).join('') : `<div class="empty">Noch keine Events eingetragen.<br>Tippe auf <b>+</b> – zum Beispiel für das nächste EXP- oder Metin-Event auf ${esc(S.cfg.server)}.</div>`;
+  $('#evnext').innerHTML = occ.length ? occ.map(o => evRow(o, true)).join('') : `<div class="empty">Keine eigenen Events.<br>Mit <b>+</b> trägst du z. B. Gildenkriege oder Dungeon-Termine ein.</div>`;
   const all = S.events.slice().sort((a, b) => (a.rep === 'once') - (b.rep === 'once') || a.start.localeCompare(b.start));
   $('#evall').innerHTML = all.length ? all.map(e => evRow(e)).join('') : '';
   $$('[data-ev]').forEach(b => b.onclick = () => editEvent(S.events.find(x => x.id === b.dataset.ev)));
@@ -888,17 +998,19 @@ function renderHome(){
   const yangToday = S.sessions.filter(s => ymd(new Date(s.start)) === t).reduce((a, s) => a + (s.yang || 0), 0) + (S.active ? S.active.yang || 0 : 0);
   $('#greet').textContent = [S.cfg.char, S.cfg.char && S.cfg.cls, S.cfg.lvl && 'Lv ' + S.cfg.lvl].filter(Boolean).join(' · ') + (S.cfg.char ? ' · ' : '') + S.cfg.server;
   $('#stats').innerHTML = `<div><b>${today.reduce((s, d) => s + (d.qty || 1), 0)}</b><span>Drops heute</span></div><div><b>${killsToday.toLocaleString('de-DE')}</b><span>Kills heute</span></div><div><b class="g">${fmtYang(yangToday + (dropsValue(today) || 0))}</b><span>Yang heute</span></div>`;
-  const occ = occurrences(7).slice(0, 6);
-  $('#cdowns').innerHTML = occ.length ? occ.map(o => `<button class="cd${isLive(o) ? ' live' : ''}" data-ev="${o.e.id}"><span class="ic">${esc(o.e.icon)}</span><b>${isLive(o) ? 'Jetzt' : o.start - Date.now() < 864e5 ? hm(new Date(o.start)) : WD[wdOf(o.ds)]}</b><span>${isLive(o) ? (o.hasEnd ? 'noch ' + fmtDur(o.end - Date.now()) : 'läuft') : evWhen(o)}</span><div class="t">${esc(o.e.name)}</div></button>`).join('')
+  const occ = occurrences(7).concat(offOccurrences(7).filter(o => o.off === 'news' || offWanted(o.e.name) || (o.off === 'extra'))).sort((a, b) => a.start - b.start).slice(0, 8);
+  $('#cdowns').innerHTML = occ.length ? occ.map(o => `<button class="cd${isLive(o) ? ' live' : ''}" data-ev="${o.off ? '' : o.e.id}"><span class="ic">${esc(o.e.icon)}</span><b>${isLive(o) ? 'Jetzt' : o.start - Date.now() < 864e5 ? hm(new Date(o.start)) : WD[wdOf(o.ds)]}</b><span>${isLive(o) ? (o.hasEnd ? 'noch ' + fmtDur(o.end - Date.now()) : 'läuft') : evWhen(o)}</span><div class="t">${esc(o.e.name)}</div></button>`).join('')
     : `<button class="cd" id="cd-new"><b>＋</b><span>Event eintragen</span><div class="t">Nie wieder eins verpassen</div></button>`;
-  $$('#cdowns [data-ev]').forEach(b => b.onclick = () => editEvent(S.events.find(x => x.id === b.dataset.ev)));
+  $$('#cdowns [data-ev]').forEach(b => b.onclick = () => { const e = S.events.find(x => x.id === b.dataset.ev); if(e) editEvent(e); else showView('events'); });
   if($('#cd-new')) $('#cd-new').onclick = () => { showView('events'); editEvent(); };
-  const hints = [];
+  const hints = [], ns = nowOnServer();
+  if(ns && (ns.cur || ns.next)) hints.push(`<button class="hint" id="h-now">${ns.cur ? '🟢' : '⏳'} <span>${ns.cur ? `<b>Jetzt auf ${esc(shortServer(ns.plan.server))}:</b> ${esc(ns.cur.name)} bis ${ns.cur.bis}` : `<b>Heute noch auf ${esc(shortServer(ns.plan.server))}</b>`}${ns.next ? ` · ab ${ns.next.von}: ${esc(ns.next.name)}` : ''}</span></button>`);
   S.prices.forEach(p => { const st = priceStats(p); if(st.hint === 'cheap' && p.entries.at(-1).ts > Date.now() - 3 * 864e5) hints.push(`<button class="hint" data-p="${p.id}">💚 <span><b>${esc(p.item)}</b> ist gerade günstig: ${fmtYang(st.last)} (Ø ${fmtYang(st.avg)})</span></button>`); });
   if(!S.wiki) hints.push(`<button class="hint" id="h-wiki">📚 <span>Wiki-Daten werden geladen, sobald sie bereitliegen – dann gibt's Vorschläge beim Tippen.</span></button>`);
-  $('#hints').innerHTML = hints.slice(0, 4).join('');
+  $('#hints').innerHTML = hints.slice(0, 5).join('');
   $$('#hints [data-p]').forEach(b => b.onclick = () => priceDetail(S.prices.find(p => p.id === b.dataset.p)));
   if($('#h-wiki')) $('#h-wiki').onclick = () => refreshWiki(true);
+  if($('#h-now')) $('#h-now').onclick = () => showView('events');
   $('#homesess').innerHTML = S.active ? sessCard(S.active, true) : `<button class="row" id="h-start"><div class="ic">⚔️</div><div class="mid"><b>Farm-Session starten</b><small>Kills zählen, Drops antippen, Droprate sehen</small></div><div class="rt">›</div></button>`;
   wireSess(); if($('#h-start')) $('#h-start').onclick = () => sessionSheet();
   $('#recent').innerHTML = S.drops.length ? S.drops.slice(0, 6).map(d => `<button class="row" data-drop="${d.id}"><div class="ic">${itemIcon(wikiItem(d.item)?.cat)}</div><div class="mid"><b>${esc(d.item)}${d.qty > 1 ? ` <span style="color:var(--gold)">×${d.qty}</span>` : ''}</b><small>${esc([d.mob, d.map].filter(Boolean).join(' · ') || '–')}</small></div><div class="rt"><small>${fmtDay(ymd(new Date(d.ts)))}<br>${hm(new Date(d.ts))}</small></div></button>`).join('') : '<div class="empty">Noch nichts gefarmt.</div>';
@@ -930,7 +1042,7 @@ $('#fab').onclick = () => {
   }
 };
 function renderBadges(){
-  const live = occurrences(1).filter(isLive).length;
+  const live = occurrences(1).filter(isLive).length + offOccurrences(1).filter(o => isLive(o) && (o.off === 'news' || isFav(o.e.name))).length;
   $('#b-ev').textContent = live ? live : '';
   $('#b-farm').textContent = S.active ? '●' : '';
 }
@@ -950,7 +1062,11 @@ $('#gear').onclick = () => {
     <label class="f">Server</label><input type="text" id="c-srv" value="${esc(c.server)}">
     <h3>Erinnerungen</h3>
     <div class="sw"><div>Push-Benachrichtigungen<div class="muted" id="s-notinfo"></div></div><button class="tog${c.notify ? ' on' : ''}" id="c-not"></button></div>
-    <label class="f">Standard-Vorlauf für neue Events</label><div class="seg" id="c-rem">${REMINDS.filter(r => r[0] >= 0).map(([v, t]) => `<button data-v="${v}" class="${c.remind === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <label class="f">Drop-Events aus dem Forum (Wochenplan)</label><div class="seg" id="c-off">${[['fav', 'Nur markierte 🔔'], ['all', 'Alle'], ['off', 'Aus']].map(([k, t]) => `<button data-k="${k}" class="${c.offNotify === k ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <div class="sw"><div>Große Events beim Start melden<div class="muted">z. B. Schatzinsel, Halloween, Ostern</div></div><button class="tog${c.newsNotify ? ' on' : ''}" id="c-news"></button></div>
+    <label class="f">Vorlauf für Erinnerungen</label><div class="seg" id="c-rem">${REMINDS.filter(r => r[0] >= 0).map(([v, t]) => `<button data-v="${v}" class="${c.remind === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <h3>Event-Termine</h3>
+    <div class="set-row"><div class="muted">${S.off ? `Stand ${S.off.stand ? new Date(S.off.stand).toLocaleString('de-DE') : '–'} · ${(S.off.plaene || []).length} Wochenpläne` : 'noch nicht geladen'}<br><small>Werden zweimal täglich aus dem offiziellen Forum (Eventkalender & News) geholt.</small></div><button class="chip" id="c-off-r">Prüfen</button></div>
     <h3>Wiki-Daten</h3>
     <div class="set-row"><div class="muted">${S.wiki ? `Stand ${fmtDate(S.wiki.stand)} · ${S.wiki.eintraege.length} Einträge` : 'noch nicht geladen'}<br><small>Werden zweimal im Monat automatisch aus dem offiziellen Wiki geholt.</small></div><button class="chip" id="c-wiki">Prüfen</button></div>
     <h3>Sicherung</h3>
@@ -965,6 +1081,9 @@ $('#gear').onclick = () => {
   $$('#c-rem button').forEach(b => b.onclick = () => { c.remind = +b.dataset.v; $$('#c-rem button').forEach(x => x.classList.toggle('on', x === b)); saveCfg(); });
   $('#c-not').onclick = async e => { c.notify = !c.notify; e.currentTarget.classList.toggle('on', c.notify); if(c.notify) await askNotify(true); saveCfg(); renderNotifyInfo(); };
   $('#c-wiki').onclick = () => refreshWiki(true);
+  $$('#c-off button').forEach(b => b.onclick = () => { c.offNotify = b.dataset.k; $$('#c-off button').forEach(x => x.classList.toggle('on', x === b)); saveCfg(); if(c.offNotify !== 'off') askNotify(false); });
+  $('#c-news').onclick = e => { c.newsNotify = !c.newsNotify; e.currentTarget.classList.toggle('on', c.newsNotify); saveCfg(); };
+  $('#c-off-r').onclick = () => refreshOff(true);
   $('#c-bk').onclick = () => writeBackup(true);
   $('#c-cp').onclick = async () => { try{ await navigator.clipboard.writeText(backupJSON()); toast('Sicherung kopiert'); }catch(e){ toast('Kopieren nicht möglich'); } };
   $('#c-imp').onclick = () => { openSheet(`<h2>Sicherung einfügen</h2><textarea id="imp-t" style="min-height:160px" placeholder="Hier die kopierte Sicherung einfügen"></textarea><div class="btns"><button class="btn pri" id="imp-go">Einfügen</button></div><p class="muted" style="font-size:12px">Vorhandene Einträge bleiben erhalten, neue kommen dazu.</p>`); $('#imp-go').onclick = () => importBackup($('#imp-t').value); };
@@ -1063,6 +1182,17 @@ async function doSchedule(){
       if(at <= now + 5000) return;
       list.push({id:hashId(e.id + o.ds), title:`${e.icon || '🔔'} ${e.name}`, body:(e.remind ? `In ${e.remind >= 60 ? (e.remind / 60) + ' Std' : e.remind + ' Min'} · ${e.start} Uhr` : `Jetzt · ${e.start} Uhr`) + (e.end ? ` bis ${e.end}` : '') + ` auf ${S.cfg.server}` + (e.note ? `\n${e.note}` : ''), schedule:{at:new Date(at), allowWhileIdle:true}, extra:{ev:e.id}});
     });
+    // Forum: Drop-Events (markiert oder alle) und große Events
+    offOccurrences(7, todayStr()).forEach(o => {
+      const want = o.off === 'news' ? S.cfg.newsNotify : offWanted(o.e.name);
+      if(!want) return;
+      const lead = o.off === 'news' ? 0 : (S.cfg.remind || 0);
+      const at = o.start - lead * 60000;
+      if(at <= now + 5000) return;
+      const srv = shortServer((myPlan() || {}).server) || S.cfg.server;
+      list.push({id:hashId(o.e.id + o.ds + o.e.start), title:o.off === 'news' ? `🎉 Event startet: ${o.e.name}` : `🎁 ${o.e.name}-Event ${lead ? 'in ' + lead + ' Min' : 'startet'}`,
+        body:o.off === 'news' ? `${o.e.note || ''} – bis ${new Date(o.end).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr` : `${o.e.start}–${o.e.end} Uhr auf ${srv} · ${o.e.note}`, schedule:{at:new Date(at), allowWhileIdle:true}, extra:{off:1}});
+    });
     list.sort((a, b) => a.schedule.at - b.schedule.at);
     if(list.length) await LN.schedule({notifications:list.slice(0, 60)});
   }catch(e){ console.log('Erinnerungen:', e); }
@@ -1075,7 +1205,7 @@ async function askNotify(force){
 async function renderNotifyInfo(){
   const el = $('#s-notinfo'); if(!el) return;
   if(!NATIVE){ el.textContent = 'nur in der Android-App'; return; }
-  try{ const p = await plug('LocalNotifications').checkPermissions(); el.textContent = !S.cfg.notify ? 'aus' : p.display === 'granted' ? 'aktiv – für deine Events' : 'Bitte Benachrichtigungen erlauben (Android-Einstellungen)'; }catch(e){ el.textContent = ''; }
+  try{ const p = await plug('LocalNotifications').checkPermissions(); el.textContent = !S.cfg.notify ? 'aus' : p.display === 'granted' ? 'aktiv – für Events & Forum-Termine' : 'Bitte Benachrichtigungen erlauben (Android-Einstellungen)'; }catch(e){ el.textContent = ''; }
 }
 if(NATIVE){
   try{ plug('LocalNotifications').addListener('localNotificationActionPerformed', () => { closeSheet(); showView('events'); }); }catch(e){}
@@ -1086,11 +1216,12 @@ $('#logo').src = 'icon.svg';
 $('#logo').onerror = () => { $('#logo').style.display = 'none'; };
 showView('home'); renderBadges();
 loadWiki();
+setTimeout(maybeRefreshOff, 600);
 setInterval(() => { if(document.hidden) return; renderBadges(); if(S.view === 'home') renderHome(); else if(S.view === 'events') renderEvents(); }, 60000);
-document.addEventListener('visibilitychange', () => { if(!document.hidden){ renderBadges(); if(S.view === 'home') renderHome(); } });
+document.addEventListener('visibilitychange', () => { if(!document.hidden){ renderBadges(); maybeRefreshOff(); if(S.view === 'home') renderHome(); else if(S.view === 'events') renderEvents(); } });
 setTimeout(() => checkUpdate(false), 2500);
 if(NATIVE){
-  setTimeout(async () => { if(S.cfg.notify && S.events.length) await askNotify(false); scheduleReminders(); }, 1200);
+  setTimeout(async () => { if(S.cfg.notify) await askNotify(false); scheduleReminders(); }, 1200);
   { const t = store('m2_lastbk'); if(!t || ymd(new Date(t)) !== todayStr()) setTimeout(() => writeBackup(false), 4000); }
 }
 </script>
