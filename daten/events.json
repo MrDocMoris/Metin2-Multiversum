@@ -1,5 +1,5 @@
 {
- "stand": "2026-11-23T11:59",
+ "stand": "2026-11-23T12:30",
  "quelle": "https://board.de.metin2.gameforge.com/index.php?thread/90381-eventkalender/",
  "plaene": [
   {
@@ -373,5 +373,70 @@
    "ende": "2026-11-24T23:59"
   }
  ],
- "hinweise": []
+ "hinweise": [],
+ "wartung": {
+  "posts": [
+   {
+    "datum": "2026-11-10T16:55:33+01:00",
+    "text": "Liebe Community, die nächste wöchentliche Wartung findet am Mittwoch, den 11.11., um 09:00 Uhr statt."
+   },
+   {
+    "datum": "2026-11-11T13:14:56+01:00",
+    "text": "Die Wartungsarbeiten wurden erfolgreich beendet und die Server sind wieder online."
+   },
+   {
+    "datum": "2026-11-17T10:27:06+01:00",
+    "text": "Liebe Community, die nächste wöchentliche Wartung findet am Mittwoch, den 18.11., um 09:00 Uhr statt."
+   },
+   {
+    "datum": "2026-11-18T13:00:30+01:00",
+    "text": "Die Wartungsarbeiten wurden erfolgreich beendet und die Server sind wieder online."
+   }
+  ],
+  "naechste": "2026-11-18T09:00",
+  "beendet": "2026-11-18T13:00:30+01:00",
+  "angekuendigt": "2026-11-17T10:27:06+01:00"
+ },
+ "neuigkeiten": [
+  {
+   "titel": "Jetzt live: Yohara-Boost-Server & Twitch Drops",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134868-jetzt-live-yohara-boost-server-twitch-drops/",
+   "datum": "2026-11-13T10:02:34+01:00"
+  },
+  {
+   "titel": "Der Countdown läuft: Kreiert ein Premium-Item!",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134861-der-countdown-l%C3%A4uft-kreiert-ein-premium-item/",
+   "datum": "2026-11-12T11:00:00+01:00"
+  },
+  {
+   "titel": "Yohara-Boost-Server – Details und FAQ",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134836-yohara-boost-server-details-und-faq/",
+   "datum": "2026-11-06T09:00:00+01:00"
+  },
+  {
+   "titel": "Bald Live: Neue Yohara-Boost-Server",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134814-bald-live-neue-yohara-boost-server/",
+   "datum": "2026-10-31T12:42:29+01:00"
+  },
+  {
+   "titel": "Der Countdown läuft: Teilt eure Erinnerungen!",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134775-der-countdown-l%C3%A4uft-teilt-eure-erinnerungen/",
+   "datum": "2026-10-23T11:00:00+02:00"
+  },
+  {
+   "titel": "Channel-Zugang – Start mit Release 26.2",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134720-channel-zugang-start-mit-release-26-2/",
+   "datum": "2026-10-13T12:51:42+02:00"
+  },
+  {
+   "titel": "Update 26.2 – Aamon's Legacy",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134696-update-26-2-aamon-s-legacy/",
+   "datum": "2026-10-08T10:00:00+02:00"
+  },
+  {
+   "titel": "Ankündigung: Altersverifizierung für Metin2",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134694-ank%C3%BCndigung-altersverifizierung-f%C3%BCr-metin2/",
+   "datum": "2026-10-07T16:31:40+02:00"
+  }
+ ]
 }
