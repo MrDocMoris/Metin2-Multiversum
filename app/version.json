@@ -1,7 +1,7 @@
 {
-  "build": 4,
-  "version": "1.4",
-  "size": 5943745,
-  "apk": "https://github.com/MrDocMoris/Metin2-Multiversum/releases/download/v1.4/Metin2-Multiversum.apk",
-  "notes": "Alle gespeicherten Ideen: Kalender, Mondlicht-Abend, Tages-Checkliste, Biologe, Pets, Fertigkeiten, Boss-Timer, Maps, Wartung, Serverstatus, Neuigkeiten, Hintergrund-Meldungen, Server-Sync"
+  "build": 5,
+  "version": "1.5",
+  "size": 5946305,
+  "apk": "https://github.com/MrDocMoris/Metin2-Multiversum/releases/download/v1.5/Metin2-Multiversum.apk",
+  "notes": "Biologe & Fertigkeiten: eigene Wartezeiten, Restzeit aus dem Spiel, Exorzismus, Live-Countdown; einstellbare Erinnerungen, Pets standardmäßig 2 Tage vorher"
 }
