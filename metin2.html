@@ -1087,7 +1087,11 @@ $('#gear').onclick = () => {
     <div class="sw"><div>Push bei Event-Plan-Änderungen<div class="muted">wenn das Team im Forum etwas für deinen Server ändert</div></div><button class="tog${c.bgPlan !== false ? ' on' : ''}" id="c-bgp"></button></div>
     <div class="sw"><div>Wartungen ankündigen<div class="muted">bei neuer Ankündigung und 30 Min vorher</div></div><button class="tog${c.bgWartung !== false ? ' on' : ''}" id="c-bgw"></button></div>
     <div class="sw"><div>Neuigkeiten (Updates, neue Server)<div class="muted">aus „News — Game“ im Forum</div></div><button class="tog${c.bgNews !== false ? ' on' : ''}" id="c-bgn"></button></div>
-    <label class="f">Vorlauf für Erinnerungen</label><div class="seg" id="c-rem">${REMINDS.filter(r => r[0] >= 0).map(([v, t]) => `<button data-v="${v}" class="${c.remind === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <h3>Erinnerungen der Werkzeuge</h3>
+    <div class="muted" style="margin-bottom:-4px">🧪 Biologe</div>${remRow('bio')}
+    <div class="muted" style="margin:10px 0 -4px">📘 Fertigkeiten</div>${remRow('skill')}
+    <div class="muted" style="margin:10px 0 -4px">🐾 Pets & Reittiere</div>${remRow('pet')}
+    <label class="f" style="margin-top:14px">Vorlauf für Event-Erinnerungen</label><div class="seg" id="c-rem">${REMINDS.filter(r => r[0] >= 0).map(([v, t]) => `<button data-v="${v}" class="${c.remind === v ? 'on' : ''}">${t}</button>`).join('')}</div>
     <h3>Event-Termine</h3>
     <div class="set-row"><div class="muted">${S.off ? `Stand ${S.off.stand ? new Date(S.off.stand).toLocaleString('de-DE') : '–'} · ${(S.off.plaene || []).length} Wochenpläne` : 'noch nicht geladen'}<br><small>Werden zweimal täglich aus dem offiziellen Forum (Eventkalender & News) geholt.</small></div><button class="chip" id="c-off-r">Prüfen</button></div>
     <h3>Wiki-Daten</h3>
@@ -1111,6 +1115,7 @@ $('#gear').onclick = () => {
   $('#c-off-r').onclick = () => refreshOff(true);
   [['#c-bgp', 'bgPlan'], ['#c-bgw', 'bgWartung'], ['#c-bgn', 'bgNews']].forEach(([id, k]) => $(id).onclick = e => { c[k] = c[k] === false; e.currentTarget.classList.toggle('on', c[k] !== false); saveCfg(); });
   $('#c-srv').onclick = srvSheet;
+  wireRem('#sheet', () => scheduleReminders());
   $('#c-bk').onclick = () => writeBackup(true);
   $('#c-cp').onclick = async () => { try{ await navigator.clipboard.writeText(backupJSON()); toast('Sicherung kopiert'); }catch(e){ toast('Kopieren nicht möglich'); } };
   $('#c-imp').onclick = () => { openSheet(`<h2>Sicherung einfügen</h2><textarea id="imp-t" style="min-height:160px" placeholder="Hier die kopierte Sicherung einfügen"></textarea><div class="btns"><button class="btn pri" id="imp-go">Einfügen</button></div><p class="muted" style="font-size:12px">Vorhandene Einträge bleiben erhalten, neue kommen dazu.</p>`); $('#imp-go').onclick = () => importBackup($('#imp-t').value); };
@@ -1221,9 +1226,10 @@ async function doSchedule(){
       list.push({id:hashId(o.e.id + o.ds + o.e.start), title:o.off === 'news' ? `🎉 Event startet: ${o.e.name}` : `🎁 ${o.e.name}-Event ${lead ? 'in ' + lead + ' Min' : 'startet'}`,
         body:o.off === 'news' ? `${o.e.note || ''} – bis ${new Date(o.end).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr` : `${o.e.start}–${o.e.end} Uhr auf ${srv} · ${o.e.note}`, schedule:{at:new Date(at), allowWhileIdle:true}, extra:{off:1}});
     });
-    list.push(...toolReminders(now));
+    const tools = toolReminders(now);
     list.sort((a, b) => a.schedule.at - b.schedule.at);
-    if(list.length) await LN.schedule({notifications:list.slice(0, 60)});
+    const all = tools.concat(list.slice(0, Math.max(0, 60 - tools.length)));
+    if(all.length) await LN.schedule({notifications:all});
   }catch(e){ console.log('Erinnerungen:', e); }
 }
 async function askNotify(force){
@@ -1250,6 +1256,43 @@ const T = {
   moon: Object.assign({list:['Inventar leeren', 'Drop-Ring / Glücks-Items anlegen', 'Tränke auffüllen', 'Spot aussuchen'], done:{}}, store('m2_moon') || {}),
 };
 const saveT = k => { store('m2_' + k, T[k]); scheduleReminders(); autoBackup(); srvSchedule(); };
+
+
+/* ---- Helfer: Dauer-Eingabe, Restzeit aus dem Spiel, Erinnerungs-Einstellung ---- */
+const DEF_REM = {bio:{on:true, lead:0}, skill:{on:true, lead:0}, pet:{on:true, days:2, h1:true}};
+function remCfg(k){ S.cfg.rem = S.cfg.rem || {}; S.cfg.rem[k] = Object.assign({}, DEF_REM[k], S.cfg.rem[k] || {}); return S.cfg.rem[k]; }
+const fmtCd = m => m >= 1440 && m % 1440 === 0 ? (m / 1440) + (m === 1440 ? ' Tag' : ' Tage') : m >= 60 ? `${Math.floor(m / 60)} Std${m % 60 ? ' ' + (m % 60) + ' Min' : ''}` : m + ' Min';
+function durFields(id, min, big){
+  const d = big ? Math.floor(min / 1440) : 0, h = Math.floor((min - d * 1440) / 60), mi = Math.round(min % 60);
+  return `<div class="two">${big ? `<div><label class="f">Tage</label><input type="text" inputmode="numeric" id="${id}-d" value="${d || ''}" placeholder="0"></div>` : ''}<div><label class="f">Stunden</label><input type="text" inputmode="numeric" id="${id}-h" value="${h || ''}" placeholder="0"></div>${big ? '' : `<div><label class="f">Minuten</label><input type="text" inputmode="numeric" id="${id}-m" value="${mi || ''}" placeholder="0"></div>`}</div>`;
+}
+function readDur(id){ const v = x => Math.max(0, parseFloat(String(($(`#${id}-${x}`) || {}).value || '0').replace(',', '.')) || 0); return Math.round(v('d') * 1440 + v('h') * 60 + v('m')); }
+// „Im Spiel steht noch 1:23 Std“ -> Restzeit direkt übernehmen
+function restSheet(title, cb){
+  openSheet(`<h2>⏱️ Restzeit übernehmen</h2><p class="muted" style="margin:0 0 6px">${esc(title)} – trag ein, was im Spiel als verbleibende Zeit angezeigt wird.</p>${durFields('rs', 0)}
+    <div class="btns"><button class="btn pri" id="rs-ok">Übernehmen</button><button class="btn" id="rs-now">Schon bereit</button></div>`);
+  setTimeout(() => $('#rs-h').focus(), 300);
+  $('#rs-ok').onclick = () => { const m = readDur('rs'); cb(Date.now() + m * 60000); closeSheet(); toast(m ? `🔔 Erinnerung in ${fmtCd(m)}` : 'Bereit'); };
+  $('#rs-now').onclick = () => { cb(0); closeSheet(); toast('Als bereit markiert'); };
+}
+function remRow(k, onChange){
+  const r = remCfg(k);
+  const opts = k === 'pet' ? [[0, 'Aus'], [1, '1 Tag'], [2, '2 Tage'], [3, '3 Tage'], [7, '7 Tage']] : [[-1, 'Aus'], [0, 'Sofort'], [5, '5 Min'], [15, '15 Min'], [30, '30 Min']];
+  const cur = k === 'pet' ? (r.on ? r.days : 0) : (r.on ? r.lead : -1);
+  return `<label class="f">🔔 Erinnerung${k === 'pet' ? ' vor dem Ablauf' : ''}</label><div class="seg" data-rem="${k}">${opts.map(([v, t]) => `<button data-v="${v}" class="${cur === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+    ${k === 'pet' ? `<div class="sw"><div>Zusätzlich 1 Stunde vorher</div><button class="tog${r.h1 ? ' on' : ''}" data-rem1h></button></div>` : ''}`;
+}
+function wireRem(root, after){
+  $$(root + ' [data-rem] button').forEach(b => b.onclick = () => {
+    const k = b.parentElement.dataset.rem, r = remCfg(k), v = +b.dataset.v;
+    if(k === 'pet'){ r.on = v > 0; if(v > 0) r.days = v; } else { r.on = v >= 0; if(v >= 0) r.lead = v; }
+    saveCfg(); $$(`${root} [data-rem="${k}"] button`).forEach(x => x.classList.toggle('on', x === b)); if(r.on && NATIVE) askNotify(false); after && after();
+  });
+  $$(root + ' [data-rem1h]').forEach(b => b.onclick = () => { const r = remCfg('pet'); r.h1 = !r.h1; b.classList.toggle('on', r.h1); saveCfg(); });
+}
+// Countdown-Texte auf offenen Seiten jede Sekunde auffrischen
+setInterval(() => { $$('[data-until]').forEach(el => { const u = +el.dataset.until, l = u - Date.now(); el.textContent = l > 0 ? fmtClock(l) : (el.dataset.done || 'bereit'); }); }, 1000);
+function fmtClock(ms){ const s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h >= 48 ? fmtDur(ms) : `${h ? h + ':' : ''}${h ? pad2(m) : m}:${pad2(x)}${h ? ' Std' : ' Min'}`; }
 
 /* ---- Tages-Checkliste (setzt sich jeden Morgen zurück) ---- */
 function checkDay(){ const d = new Date(); if(d.getHours() < (T.check.reset || 0)) d.setDate(d.getDate() - 1); return ymd(d); }
@@ -1280,11 +1323,12 @@ function openCheck(fromHist){
 }
 
 /* ---- Biologen-Begleiter ---- */
-const bioReady = () => !T.bio.last || Date.now() >= T.bio.last + T.bio.cd * 60000;
+const bioNext = () => T.bio.next != null ? T.bio.next : (T.bio.last ? T.bio.last + T.bio.cd * 60000 : 0);
+const bioReady = () => Date.now() >= bioNext();
 function bioCard(){
   const b = T.bio;
   if(!b.item) return `<button class="row" data-tool="bio"><div class="ic">🧪</div><div class="mid"><b>Biologe</b><small>Aktuelle Abgabe eintragen</small></div><div class="rt">›</div></button>`;
-  return `<button class="row" data-tool="bio"><div class="ic">🧪</div><div class="mid"><b>Biologe: ${esc(b.item)}</b><small>${b.have}/${b.need} abgegeben · ${bioReady() ? '<span style="color:var(--ok)">jetzt abgeben möglich</span>' : 'wieder in ' + fmtDur(b.last + b.cd * 60000 - Date.now())}</small><div class="bar2"><i style="width:${Math.min(100, Math.round(b.have / Math.max(1, b.need) * 100))}%"></i></div></div><div class="rt">›</div></button>`;
+  return `<button class="row" data-tool="bio"><div class="ic">🧪</div><div class="mid"><b>Biologe: ${esc(b.item)}</b><small>${b.have}/${b.need} abgegeben · ${bioReady() ? '<span style="color:var(--ok)">jetzt abgeben möglich</span>' : 'wieder in ' + fmtDur(bioNext() - Date.now())}</small><div class="bar2"><i style="width:${Math.min(100, Math.round(b.have / Math.max(1, b.need) * 100))}%"></i></div></div><div class="rt">›</div></button>`;
 }
 function openBio(fromHist){
   if(!fromHist) S.hist.push(f => openBio(f));
@@ -1292,22 +1336,28 @@ function openBio(fromHist){
   subPage({head:'<div style="font-size:26px">🧪</div><h1>Biologe</h1>', body:`
     ${b.item ? `<div class="sess" style="border-color:rgba(127,227,255,.45)"><div class="top"><div style="flex:1"><b>${esc(b.item)}</b><small>${b.have} von ${b.need} erfolgreich abgegeben</small></div></div>
       <div class="bar2" style="height:10px;margin:10px 0"><i style="width:${Math.min(100, Math.round(b.have / Math.max(1, b.need) * 100))}%"></i></div>
-      <div style="font-size:15px;margin-bottom:10px">${bioReady() ? '🟢 Du kannst jetzt abgeben' : `⏳ Nächste Abgabe in <b>${fmtDur(b.last + b.cd * 60000 - Date.now())}</b> (${hm(new Date(b.last + b.cd * 60000))} Uhr)`}</div>
+      <div style="font-size:15px;margin-bottom:10px">${bioReady() ? '🟢 Du kannst jetzt abgeben' : `⏳ Nächste Abgabe in <b data-until="${bioNext()}" data-done="jetzt">${fmtClock(bioNext() - Date.now())}</b> (${hm(new Date(bioNext()))} Uhr)`}</div>
       <div class="btns" style="margin-top:0"><button class="btn pri" id="bio-ok">✔ Erfolgreich</button><button class="btn" id="bio-fail">✗ Fehlgeschlagen</button></div>
+      <div class="btns" style="margin-top:8px"><button class="btn" id="bio-rest">⏱️ Restzeit aus dem Spiel</button>${bioReady() ? '' : '<button class="btn" id="bio-reset">Jetzt bereit</button>'}</div>
       ${mine ? `<p class="muted" style="margin:8px 0 0">Im Farm-Log: ${mine}× ${esc(b.item)} gefunden</p>` : ''}</div>` : '<p class="muted">Trag ein, was der Biologe gerade von dir will. Nach jeder Abgabe erinnert dich die App, sobald die Wartezeit vorbei ist.</p>'}
     <label class="f">Gesuchtes Item</label><input type="text" id="bio-item" value="${esc(b.item)}" placeholder="z. B. Orkzahn" autocomplete="off">
     <div class="two"><div><label class="f">Benötigt</label><input type="text" inputmode="numeric" id="bio-need" value="${b.need}"></div><div><label class="f">Schon abgegeben</label><input type="text" inputmode="numeric" id="bio-have" value="${b.have}"></div></div>
-    <label class="f">Wartezeit zwischen zwei Abgaben</label><div class="seg" id="bio-cd">${[[10, '10 Min'], [30, '30 Min'], [60, '1 Std'], [120, '2 Std'], [1440, '24 Std']].map(([v, t]) => `<button data-v="${v}" class="${b.cd === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <label class="f">Wartezeit zwischen zwei Abgaben (aktuell ${fmtCd(b.cd)})</label><div class="seg" id="bio-cd">${[[10, '10 Min'], [30, '30 Min'], [60, '1 Std'], [120, '2 Std'], [1440, '24 Std']].map(([v, t]) => `<button data-v="${v}" class="${b.cd === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+    ${durFields('bio-dur', b.cd)}
+    ${remRow('bio')}
     <label class="f">Notiz</label><input type="text" id="bio-note" value="${esc(b.note || '')}" placeholder="z. B. danach Seelenstein-Aufgabe">
     <div class="btns"><button class="btn pri" id="bio-save">Speichern</button>${b.item ? '<button class="btn del" id="bio-new">Neue Aufgabe</button>' : ''}</div>
-    <p class="muted" style="font-size:12px;margin-top:10px">Die Wartezeiten unterscheiden sich je Aufgabe und Elixier – stell sie passend ein.</p>`});
+    <p class="muted" style="font-size:12px;margin-top:10px">Die Wartezeiten unterscheiden sich je Aufgabe und Elixier. Am genauesten: nach der Abgabe die Restzeit aus dem Spiel übernehmen.</p>`});
   suggest($('#bio-item'), 'item');
-  const grab = () => { b.item = $('#bio-item').value.trim(); b.need = Math.max(1, parseInt($('#bio-need').value, 10) || 1); b.have = Math.max(0, parseInt($('#bio-have').value, 10) || 0); b.note = $('#bio-note').value.trim(); };
-  $$('#bio-cd button').forEach(x => x.onclick = () => { b.cd = +x.dataset.v; $$('#bio-cd button').forEach(y => y.classList.toggle('on', y === x)); });
+  const grab = () => { const m = readDur('bio-dur'); if(m > 0) b.cd = m; b.item = $('#bio-item').value.trim(); b.need = Math.max(1, parseInt($('#bio-need').value, 10) || 1); b.have = Math.max(0, parseInt($('#bio-have').value, 10) || 0); b.note = $('#bio-note').value.trim(); };
+  $$('#bio-cd button').forEach(x => x.onclick = () => { b.cd = +x.dataset.v; $$('#bio-cd button').forEach(y => y.classList.toggle('on', y === x)); $('#bio-dur-h').value = Math.floor(b.cd / 60) || ''; $('#bio-dur-m').value = b.cd % 60 || ''; });
+  wireRem('#sub', () => scheduleReminders());
+  if($('#bio-rest')) $('#bio-rest').onclick = () => restSheet('Biologe: ' + b.item, t => { b.next = t; saveT('bio'); openBio(true); });
+  if($('#bio-reset')) $('#bio-reset').onclick = () => { b.next = 0; saveT('bio'); openBio(true); };
   $('#bio-save').onclick = () => { grab(); saveT('bio'); toast('Gespeichert'); openBio(true); };
-  if($('#bio-ok')) $('#bio-ok').onclick = () => { b.have++; b.last = Date.now(); saveT('bio'); toast(b.have >= b.need ? '🎉 Aufgabe geschafft!' : `✔ ${b.have}/${b.need} – Erinnerung in ${fmtDur(b.cd * 60000)}`); if(NATIVE) askNotify(false); openBio(true); };
-  if($('#bio-fail')) $('#bio-fail').onclick = () => { b.last = Date.now(); saveT('bio'); toast(`Schade – nächster Versuch in ${fmtDur(b.cd * 60000)}`); openBio(true); };
-  if($('#bio-new')) $('#bio-new').onclick = () => { if(!confirmTwice('#bio-new')) return; T.bio = {item:'', need:10, have:0, cd:b.cd, last:0, note:''}; saveT('bio'); openBio(true); };
+  if($('#bio-ok')) $('#bio-ok').onclick = () => { b.have++; b.last = Date.now(); b.next = b.last + b.cd * 60000; saveT('bio'); toast(b.have >= b.need ? '🎉 Aufgabe geschafft!' : `✔ ${b.have}/${b.need} – Erinnerung in ${fmtDur(b.cd * 60000)}`); if(NATIVE) askNotify(false); openBio(true); };
+  if($('#bio-fail')) $('#bio-fail').onclick = () => { b.last = Date.now(); b.next = b.last + b.cd * 60000; saveT('bio'); toast(`Schade – nächster Versuch in ${fmtDur(b.cd * 60000)}`); openBio(true); };
+  if($('#bio-new')) $('#bio-new').onclick = () => { if(!confirmTwice('#bio-new')) return; T.bio = {item:'', need:10, have:0, cd:b.cd, last:0, next:0, note:''}; saveT('bio'); openBio(true); };
 }
 
 /* ---- Boss-Respawn-Timer ---- */
@@ -1347,7 +1397,7 @@ function bossSheet(b){
 /* ---- Pets & Reittiere ---- */
 function petLeft(p){ return p.until ? new Date(p.until).getTime() - Date.now() : null; }
 function petCard(){
-  const soon = T.pets.filter(p => petLeft(p) != null && petLeft(p) < 3 * 864e5).sort((a, b) => petLeft(a) - petLeft(b))[0];
+  const soon = T.pets.filter(p => petLeft(p) != null && petLeft(p) < (remCfg('pet').days + 1) * 864e5).sort((a, b) => petLeft(a) - petLeft(b))[0];
   return `<button class="row" data-tool="pets"><div class="ic">🐾</div><div class="mid"><b>Pets & Reittiere</b><small>${soon ? `${esc(soon.name)} ${petLeft(soon) > 0 ? 'läuft in ' + fmtDur(petLeft(soon)) + ' ab' : 'ist abgelaufen'}` : T.pets.length ? `${T.pets.length} eingetragen` : 'Level, Fähigkeiten, Laufzeit'}</small></div><div class="rt">›</div></button>`;
 }
 function openPets(fromHist){
@@ -1355,9 +1405,10 @@ function openPets(fromHist){
   subPage({head:'<div style="font-size:26px">🐾</div><h1>Pets & Reittiere</h1>', body:`
     ${T.pets.length ? T.pets.map(p => { const l = petLeft(p);
       return `<button class="row" data-pet="${p.id}"><div class="ic">${p.kind === 'mount' ? '🐎' : '🐾'}</div><div class="mid"><b>${esc(p.name)}${p.level ? ` <span class="tag lv">Lv ${esc(p.level)}</span>` : ''}</b><small>${esc(p.skills || (p.kind === 'mount' ? 'Reittier' : 'Pet'))}</small>
-      ${l != null ? `<div style="font-size:12px;margin-top:2px;color:${l < 0 ? 'var(--bad)' : l < 864e5 ? 'var(--gold)' : 'var(--mute)'}">${l < 0 ? '⛔ abgelaufen' : '⏳ läuft ab in ' + fmtDur(l)}</div>` : ''}</div><div class="rt">›</div></button>`; }).join('') : '<div class="empty">Noch nichts eingetragen.</div>'}
+      ${l != null ? `<div style="font-size:12px;margin-top:2px;color:${l < 0 ? 'var(--bad)' : l < 864e5 ? 'var(--gold)' : 'var(--mute)'}">${l < 0 ? '⛔ abgelaufen' : `⏳ läuft ab in ${fmtDur(l)} · ${new Date(p.until).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr`}</div>` : ''}</div><div class="rt">›</div></button>`; }).join('') : '<div class="empty">Noch nichts eingetragen.</div>'}
     <div class="btns"><button class="btn pri" id="pet-add">＋ Hinzufügen</button></div>
-    <p class="muted" style="font-size:12px;margin-top:10px">Bei Zeit-Items erinnert dich die App einen Tag und eine Stunde vor dem Ablauf.</p>`});
+    ${remRow('pet')}`});
+  wireRem('#sub', () => scheduleReminders());
   $$('#sub [data-pet]').forEach(x => x.onclick = () => petSheet(T.pets.find(p => p.id === x.dataset.pet)));
   $('#pet-add').onclick = () => petSheet();
 }
@@ -1367,10 +1418,11 @@ function petSheet(p){
     <div class="seg" id="pt-k">${[['pet', '🐾 Pet'], ['mount', '🐎 Reittier']].map(([k, t]) => `<button data-k="${k}" class="${p.kind === k ? 'on' : ''}">${t}</button>`).join('')}</div>
     <div class="two"><div><label class="f">Name</label><input type="text" id="pt-n" value="${esc(p.name)}" placeholder="z. B. Löwen-Reittier"></div><div style="flex:0 0 80px"><label class="f">Level</label><input type="text" id="pt-l" value="${esc(p.level)}"></div></div>
     <label class="f">Fähigkeiten / Boni</label><textarea id="pt-s" placeholder="z. B. Monsterjäger 3, Berserker 2">${esc(p.skills)}</textarea>
-    <label class="f">Läuft ab am (optional)</label><input type="datetime-local" id="pt-u" value="${esc(p.until || '')}" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 11px;color-scheme:dark">
+    <label class="f">Restliche Lebensdauer (wie im Spiel angezeigt)</label>${durFields('pt-r', p.until ? Math.max(0, Math.round((new Date(p.until).getTime() - Date.now()) / 60000)) : 0, true)}
+    <p class="muted" style="font-size:12px;margin:4px 0 0">Leer lassen, wenn es nicht abläuft.${p.until ? ` Aktuell: läuft ab am ${new Date(p.until).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr.` : ''}</p>
     <div class="btns"><button class="btn pri" id="pt-save">Speichern</button>${isNew ? '' : '<button class="btn del" id="pt-del">Löschen</button>'}</div>`);
   $$('#pt-k button').forEach(b => b.onclick = () => { p.kind = b.dataset.k; $$('#pt-k button').forEach(x => x.classList.toggle('on', x === b)); });
-  $('#pt-save').onclick = () => { p.name = $('#pt-n').value.trim(); p.level = $('#pt-l').value.trim(); p.skills = $('#pt-s').value.trim(); p.until = $('#pt-u').value; if(!p.name){ toast('Bitte einen Namen eingeben'); return; } if(isNew) T.pets.push(p); saveT('pets'); closeSheet(); openPets(true); };
+  $('#pt-save').onclick = () => { p.name = $('#pt-n').value.trim(); p.level = $('#pt-l').value.trim(); p.skills = $('#pt-s').value.trim(); { const m = readDur('pt-r'); p.until = m ? ymd(new Date(Date.now() + m * 60000)) + 'T' + hm(new Date(Date.now() + m * 60000)) : ''; } if(!p.name){ toast('Bitte einen Namen eingeben'); return; } if(isNew) T.pets.push(p); saveT('pets'); closeSheet(); openPets(true); };
   if(!isNew) $('#pt-del').onclick = () => { if(!confirmTwice('#pt-del')) return; T.pets = T.pets.filter(x => x.id !== p.id); saveT('pets'); closeSheet(); openPets(true); };
 }
 
@@ -1378,7 +1430,8 @@ function petSheet(p){
 // Stufen: 1–19 normal, 20–29 = M1–M10, 30–39 = G1–G10, 40 = P
 const stageName = n => n < 20 ? String(n) : n < 30 ? 'M' + (n - 19) : n < 40 ? 'G' + (n - 29) : 'P';
 const stagePhase = n => n < 20 ? 'Punkte verteilen' : n < 30 ? 'Fertigkeitsbücher lesen' : n < 40 ? 'Seelensteine lesen' : 'fertig';
-function skillReady(s){ return !s.last || Date.now() >= s.last + (s.cd || 1440) * 60000; }
+const skillNext = s => s.next != null ? s.next : (s.last ? s.last + (s.cd || 1440) * 60000 : 0);
+function skillReady(s){ return Date.now() >= skillNext(s); }
 function skillCard(){
   const n = T.skills.length, ready = T.skills.filter(s => s.stage >= 20 && s.stage < 40 && skillReady(s)).length;
   return `<button class="row" data-tool="skills"><div class="ic">📘</div><div class="mid"><b>Fertigkeiten</b><small>${n ? `${T.skills.filter(s => s.stage >= 30).length} von ${n} auf G oder P${ready ? ` · <span style="color:var(--ok)">${ready}× jetzt lesbar</span>` : ''}` : `Bücher-Fortschritt für deine ${esc(S.cfg.cls || 'Klasse')}`}</small></div><div class="rt">›</div></button>`;
@@ -1389,20 +1442,29 @@ function openSkills(fromHist){
     <p class="muted" style="margin:0 0 10px">Trag deine Fertigkeiten ein. Nach jedem gelesenen Buch erinnert dich die App, wann du das nächste lesen kannst.</p>
     ${T.skills.length ? T.skills.map(s => `<div class="row" style="cursor:default;flex-wrap:wrap"><div class="ic">📘</div><div class="mid"><b>${esc(s.name)} <span class="tag lv">${stageName(s.stage)}</span></b>
       <small>${stagePhase(s.stage)}${s.stage >= 20 && s.stage < 40 ? ` · ${s.reads || 0} gelesen, ${s.fails || 0} ohne Erfolg` : ''}</small>
-      ${s.stage >= 20 && s.stage < 40 ? `<div style="font-size:12px;margin-top:2px;color:${skillReady(s) ? 'var(--ok)' : 'var(--gold)'}">${skillReady(s) ? '🟢 nächstes ' + (s.stage < 30 ? 'Buch' : 'Seelenstein') + ' lesbar' : '⏳ wieder lesbar in ' + fmtDur(s.last + (s.cd || 1440) * 60000 - Date.now())}</div>` : ''}
+      ${s.stage >= 20 && s.stage < 40 ? `<div style="font-size:12px;margin-top:2px;color:${skillReady(s) ? 'var(--ok)' : 'var(--gold)'}">${skillReady(s) ? '🟢 nächstes ' + (s.stage < 30 ? 'Buch' : 'Seelenstein') + ' lesbar' : `⏳ wieder lesbar in <span data-until="${skillNext(s)}">${fmtClock(skillNext(s) - Date.now())}</span>`}</div>` : ''}
       <div class="bar2"><i style="width:${Math.round(s.stage / 40 * 100)}%"></i></div></div>
-      <div style="display:flex;flex-direction:column;gap:6px">${s.stage >= 20 && s.stage < 40 ? `<button class="chip on" data-read="${s.id}">Gelesen</button>` : `<button class="chip" data-up="${s.id}">＋1</button>`}<button class="chip" data-sedit="${s.id}">✎</button></div></div>`).join('') : '<div class="empty">Noch keine Fertigkeiten eingetragen.</div>'}
-    <div class="btns"><button class="btn pri" id="sk-add">＋ Fertigkeit</button></div>
+      <div style="display:flex;flex-direction:column;gap:6px">${s.stage >= 20 && s.stage < 40 ? `<button class="chip on" data-read="${s.id}">Gelesen</button>${skillReady(s) ? '' : `<button class="chip" data-srest="${s.id}">⏱️</button>`}` : `<button class="chip" data-up="${s.id}">＋1</button>`}<button class="chip" data-sedit="${s.id}">✎</button></div></div>`).join('') : '<div class="empty">Noch keine Fertigkeiten eingetragen.</div>'}
+    <div class="btns"><button class="btn pri" id="sk-add">＋ Fertigkeit</button>${T.skills.some(s => !skillReady(s)) ? '<button class="btn" id="sk-exo">📜 Exorzismus benutzt</button>' : ''}</div>
+    ${remRow('skill')}
     <p class="muted" style="font-size:12px;margin-top:10px">Tipp: Bei „Gelesen“ fragt die App, ob die Stufe gestiegen ist. Konz.-Lesen- und Exorzismus-Events siehst du im Event-Tab.</p>`});
   $$('#sub [data-up]').forEach(x => x.onclick = () => { const s = T.skills.find(y => y.id === x.dataset.up); s.stage = Math.min(40, s.stage + 1); saveT('skills'); openSkills(true); });
   $$('#sub [data-read]').forEach(x => x.onclick = () => readSheet(T.skills.find(y => y.id === x.dataset.read)));
   $$('#sub [data-sedit]').forEach(x => x.onclick = () => skillSheet(T.skills.find(y => y.id === x.dataset.sedit)));
+  $$('#sub [data-srest]').forEach(x => x.onclick = () => { const sk = T.skills.find(y => y.id === x.dataset.srest); restSheet(sk.name, t => { sk.next = t; saveT('skills'); openSkills(true); }); });
   $('#sk-add').onclick = () => skillSheet();
+  if($('#sk-exo')) $('#sk-exo').onclick = () => {
+    const wait = T.skills.filter(s => !skillReady(s));
+    if(wait.length === 1){ wait[0].next = 0; saveT('skills'); toast(`📜 ${wait[0].name}: Wartezeit aufgehoben`); openSkills(true); return; }
+    openSheet(`<h2>📜 Exorzismus benutzt</h2><p class="muted">Für welche Fertigkeit wurde die Wartezeit aufgehoben?</p>${wait.map(s => `<button class="row" data-exo="${s.id}"><div class="ic">📘</div><div class="mid"><b>${esc(s.name)}</b><small>${stageName(s.stage)}</small></div></button>`).join('')}`);
+    $$('#sheet [data-exo]').forEach(b => b.onclick = () => { const sk = T.skills.find(y => y.id === b.dataset.exo); sk.next = 0; saveT('skills'); closeSheet(); toast(`📜 ${sk.name}: jetzt lesbar`); openSkills(true); });
+  };
+  wireRem('#sub', () => scheduleReminders());
 }
 function readSheet(s){
   openSheet(`<h2>${esc(s.name)} – ${stageName(s.stage)}</h2><p class="muted">Hat das ${s.stage < 30 ? 'Buch' : 'der Seelenstein'} die Stufe erhöht?</p>
     <div class="btns"><button class="btn pri" id="rd-up">⬆️ Ja, jetzt ${stageName(s.stage + 1)}</button><button class="btn" id="rd-no">Gelesen, noch nicht gestiegen</button><button class="btn" id="rd-fail">Fehlgeschlagen</button></div>`);
-  const done = (up, ok) => { s.last = Date.now(); if(ok) s.reads = (s.reads || 0) + 1; else s.fails = (s.fails || 0) + 1; if(up){ s.stage = Math.min(40, s.stage + 1); } saveT('skills'); closeSheet(); openSkills(true); toast(up ? `🎉 ${s.name} ist jetzt ${stageName(s.stage)}` : `🔔 Erinnerung in ${fmtDur((s.cd || 1440) * 60000)}`); if(NATIVE) askNotify(false); };
+  const done = (up, ok) => { s.last = Date.now(); s.next = s.last + (s.cd || 1440) * 60000; if(ok) s.reads = (s.reads || 0) + 1; else s.fails = (s.fails || 0) + 1; if(up){ s.stage = Math.min(40, s.stage + 1); } saveT('skills'); closeSheet(); openSkills(true); toast(up ? `🎉 ${s.name} ist jetzt ${stageName(s.stage)}` : `🔔 Erinnerung in ${fmtDur((s.cd || 1440) * 60000)}`); if(NATIVE) askNotify(false); };
   $('#rd-up').onclick = () => done(true, true); $('#rd-no').onclick = () => done(false, true); $('#rd-fail').onclick = () => done(false, false);
 }
 function skillSheet(s){
@@ -1411,10 +1473,11 @@ function skillSheet(s){
   openSheet(`<h2>${isNew ? 'Fertigkeit hinzufügen' : esc(s.name)}</h2>
     <label class="f">Name</label><input type="text" id="sk-n" value="${esc(s.name)}" placeholder="z. B. Segen">
     <div class="two"><div><label class="f">Stufe</label><select id="sk-st">${opts.join('')}</select></div>
-    <div><label class="f">Wartezeit nach dem Lesen</label><select id="sk-cd">${[[60, '1 Std'], [360, '6 Std'], [720, '12 Std'], [1440, '24 Std']].map(([v, t]) => `<option value="${v}"${(s.cd || 1440) === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div></div>
+    <div></div></div>
+    <label class="f">Wartezeit nach dem Lesen</label>${durFields('sk-dur', s.cd || 1440)}
     <div class="btns"><button class="btn pri" id="sk-s">Speichern</button>${isNew ? '' : '<button class="btn del" id="sk-d">Löschen</button>'}</div>
-    <p class="muted" style="font-size:12px;margin-top:8px">Wartezeit so einstellen, wie es im Spiel bei dir angezeigt wird (z. B. mit Exorzismus kürzer).</p>`);
-  $('#sk-s').onclick = () => { s.name = $('#sk-n').value.trim(); s.stage = +$('#sk-st').value; s.cd = +$('#sk-cd').value; if(!s.name){ toast('Bitte einen Namen eingeben'); return; } if(isNew) T.skills.push(s); saveT('skills'); closeSheet(); openSkills(true); };
+    <p class="muted" style="font-size:12px;margin-top:8px">Am genauesten: nach dem Lesen mit ⏱️ die Restzeit aus dem Spiel übernehmen.</p>`);
+  $('#sk-s').onclick = () => { s.name = $('#sk-n').value.trim(); s.stage = +$('#sk-st').value; s.cd = readDur('sk-dur') || 1440; if(!s.name){ toast('Bitte einen Namen eingeben'); return; } if(isNew) T.skills.push(s); saveT('skills'); closeSheet(); openSkills(true); };
   if(!isNew) $('#sk-d').onclick = () => { if(!confirmTwice('#sk-d')) return; T.skills = T.skills.filter(x => x.id !== s.id); saveT('skills'); closeSheet(); openSkills(true); };
 }
 
@@ -1553,11 +1616,14 @@ function wireTools(root){
 /* ---- Erinnerungen der Werkzeuge (werden in doSchedule eingeplant) ---- */
 function toolReminders(now){
   const L = [];
-  const add = (key, at, title, body) => { if(at > now + 5000 && at < now + 21 * 864e5) L.push({id:hashId(key), title, body, schedule:{at:new Date(at), allowWhileIdle:true}, extra:{tool:1}}); };
-  if(T.bio.item && T.bio.last && T.bio.have < T.bio.need) add('bio' + T.bio.last, T.bio.last + T.bio.cd * 60000, '🧪 Biologe wartet', `Du kannst wieder ${T.bio.item} abgeben (${T.bio.have}/${T.bio.need})`);
+  const add = (key, at, title, body, max = 21) => { if(at > now + 5000 && at < now + max * 864e5) L.push({id:hashId(key), title, body, schedule:{at:new Date(at), allowWhileIdle:true}, extra:{tool:1}}); };
+  const rb = remCfg('bio'), rs = remCfg('skill'), rp = remCfg('pet');
+  if(rb.on && T.bio.item && T.bio.have < T.bio.need && bioNext() > now){ const at = bioNext() - rb.lead * 60000; add('bio' + bioNext(), at, rb.lead ? `🧪 Biologe in ${rb.lead} Min bereit` : '🧪 Biologe wartet', `Du kannst ${rb.lead ? 'gleich' : 'jetzt'} wieder ${T.bio.item} abgeben (${T.bio.have}/${T.bio.need})`); }
   T.bosses.forEach(b => { if(b.killed) add('boss' + b.id + b.killed, b.killed + b.respawn * 60000, `👹 ${b.name} ist wieder da`, (b.map ? b.map + ' · ' : '') + 'Respawn-Zeit ist um'); });
-  T.pets.forEach(p => { if(!p.until) return; const u = new Date(p.until).getTime(); add('pet1' + p.id + p.until, u - 864e5, `${p.kind === 'mount' ? '🐎' : '🐾'} ${p.name} läuft morgen ab`, 'Rechtzeitig verlängern?'); add('pet2' + p.id + p.until, u - 3600e3, `${p.kind === 'mount' ? '🐎' : '🐾'} ${p.name} läuft in 1 Stunde ab`, 'Jetzt verlängern?'); });
-  T.skills.forEach(s => { if(s.last && s.stage >= 20 && s.stage < 40) add('sk' + s.id + s.last, s.last + (s.cd || 1440) * 60000, `📘 ${s.name}: ${s.stage < 30 ? 'Buch' : 'Seelenstein'} lesbar`, `Stufe ${stageName(s.stage)} – nächster Leseversuch möglich`); });
+  if(rp.on) T.pets.forEach(p => { if(!p.until) return; const u = new Date(p.until).getTime(), ic = p.kind === 'mount' ? '🐎' : '🐾';
+    add('petd' + p.id + p.until + rp.days, u - rp.days * 864e5, `${ic} ${p.name} läuft in ${rp.days === 1 ? 'einem Tag' : rp.days + ' Tagen'} ab`, `Am ${new Date(u).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr – rechtzeitig verlängern oder füttern`, 400);
+    if(rp.h1) add('peth' + p.id + p.until, u - 3600e3, `${ic} ${p.name} läuft in 1 Stunde ab`, 'Jetzt noch verlängern oder füttern', 400); });
+  if(rs.on) T.skills.forEach(s => { const n = skillNext(s); if(n > now && s.stage >= 20 && s.stage < 40) add('sk' + s.id + n, n - rs.lead * 60000, `📘 ${s.name}: ${s.stage < 30 ? 'Buch' : 'Seelenstein'} ${rs.lead ? 'in ' + rs.lead + ' Min ' : ''}lesbar`, `Stufe ${stageName(s.stage)} – nächster Leseversuch ${rs.lead ? 'gleich' : 'jetzt'} möglich`); });
   const m = moonNext(); if(m && T.moon.remind !== false) add('moon' + m.ds, m.start - 30 * 60000, '🌙 Mondlicht-Abend in 30 Min', T.moon.list.join(' · '));
   const w = S.off && S.off.wartung; if(w && w.naechste && S.cfg.bgWartung !== false){ const st = new Date(w.naechste).getTime(); add('wart' + w.naechste, st - 30 * 60000, '🛠️ Wartung in 30 Minuten', `Ab ${w.naechste.slice(11, 16)} Uhr sind die Server offline`); }
   return L;
