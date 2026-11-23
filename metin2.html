@@ -535,9 +535,9 @@ function renderOff(){
   hin.forEach(x => { h += `<div class="hint warn" style="margin-bottom:8px">⚠️ <span><b>Änderung laut Forum</b> (${new Date(x.datum).toLocaleDateString('de-DE')}): ${esc(x.text)}</span></div>`; });
   const news = (S.off.news || []).filter(n => new Date(n.ende || n.start).getTime() > Date.now());
   if(news.length){
-    h += `<h3 style="margin-top:0">🎉 Große Events</h3>` + news.map(n => { const st = n.start ? new Date(n.start) : null, en = n.ende ? new Date(n.ende) : null, live = st && st.getTime() <= Date.now();
+    h += `<h3 style="margin-top:0">🎉 Große Events</h3>` + news.map(n => { const st = n.start ? new Date(n.start) : null, en = n.ende ? new Date(n.ende) : null, live = !st || st.getTime() <= Date.now();
       return `<button class="ev${live ? ' live' : ''}" data-url="${esc(n.url)}"><div class="ic">🎉</div><div class="mid"><div class="dt">${live ? 'läuft' + (en ? ' noch ' + fmtDur(en - Date.now()) : '') : 'startet in ' + fmtDur(st - Date.now())}</div><div class="nm">${esc(n.name)}</div>
-      <div class="meta">${st ? st.toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'}) : ''}${en ? ' – ' + en.toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'}) : ''} · Forum ›</div></div></button>`; }).join('');
+      <div class="meta">${st ? st.toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'}) : 'bis'}${en ? (st ? ' – ' : ' ') + en.toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'}) : ''} · Forum ›</div></div></button>`; }).join('');
   }
   if(plan){
     const today = plan.woche[String(wdOf(t))] || [];

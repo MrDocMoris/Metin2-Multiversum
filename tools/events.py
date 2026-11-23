@@ -9,6 +9,7 @@ und schreibt daten/events.json für die App.
 Läuft täglich in GitHub Actions (.github/workflows/events.yml).
 """
 import datetime, json, os, re, sys, time
+from zoneinfo import ZoneInfo
 import requests
 from bs4 import BeautifulSoup, NavigableString, Tag
 
@@ -171,6 +172,7 @@ def news_events():
             elif isinstance(el, NavigableString) and not (el.parent and el.parent.name in ('h1', 'h2')):
                 parts.append(str(el))
         text = re.sub(r'[ \t\r\f\v]+', ' ', ''.join(parts))
+        title = re.sub(r'^(das\s+)?event\s*:\s*', '', title, flags=re.I).strip() or title
         cur, found = title, {}
         for m in re.finditer(r'§([^§]+)§|Event-(Start|Ende)\s*:\s*(\d{1,2})\.(\d{1,2})\.(\d{4})\s*(?:um\s*(\d{1,2}:\d{2}))?', text):
             if m.group(1):
@@ -185,7 +187,7 @@ def news_events():
         for e in found.values():
             if e.get('start') or e.get('ende'):
                 out.append(e)
-    today = datetime.date.today().isoformat()
+    today = datetime.datetime.now(ZoneInfo('Europe/Berlin')).date().isoformat()
     return [e for e in out if (e.get('ende') or e.get('start', ''))[:10] >= today]
 
 
@@ -205,7 +207,7 @@ def main():
     if old and {k: v for k, v in old.items() if k != 'stand'} == data:
         print('Unverändert')
         return
-    data = {'stand': datetime.datetime.now().strftime('%Y-%m-%dT%H:%M'), **data}
+    data = {'stand': datetime.datetime.now(ZoneInfo('Europe/Berlin')).strftime('%Y-%m-%dT%H:%M'), **data}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
