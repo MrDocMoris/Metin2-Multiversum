@@ -1,10 +1,10 @@
 {
- "stand": "2026-11-25T07:26",
+ "stand": "2026-11-26T17:37",
  "quelle": "https://board.de.metin2.gameforge.com/index.php?thread/90381-eventkalender/",
  "plaene": [
   {
    "server": "[Ruby]Chimera / [SAPPHIRE]Oceana",
-   "beitrag": "2026-10-31T08:07:23+01:00",
+   "beitrag": "2026-11-26T17:06:36+01:00",
    "woche": {
     "0": [
      {
@@ -161,24 +161,11 @@
      }
     ]
    },
-   "extra": [
-    {
-     "datum": "2026-11-01",
-     "name": "ErzEvent (Songpa, Daeyami und Miryang)",
-     "von": "21:00",
-     "bis": "23:00"
-    },
-    {
-     "datum": "2026-11-18",
-     "name": "ErzEvent (Oase)",
-     "von": "21:00",
-     "bis": "23:00"
-    }
-   ]
+   "extra": []
   },
   {
    "server": "[DIA]Blos",
-   "beitrag": "2026-10-31T08:14:50+01:00",
+   "beitrag": "2026-11-26T17:07:23+01:00",
    "woche": {
     "0": [
      {
@@ -335,20 +322,7 @@
      }
     ]
    },
-   "extra": [
-    {
-     "datum": "2026-11-01",
-     "name": "ErzEvent (Songpa, Daeyami und Miryang)",
-     "von": "21:00",
-     "bis": "23:00"
-    },
-    {
-     "datum": "2026-11-18",
-     "name": "ErzEvent (Oase)",
-     "von": "21:00",
-     "bis": "23:00"
-    }
-   ]
+   "extra": []
   }
  ],
  "news": [
