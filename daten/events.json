@@ -1,5 +1,5 @@
 {
- "stand": "2026-11-26T17:37",
+ "stand": "2026-11-27T17:37",
  "quelle": "https://board.de.metin2.gameforge.com/index.php?thread/90381-eventkalender/",
  "plaene": [
   {
@@ -367,6 +367,21 @@
  },
  "neuigkeiten": [
   {
+   "titel": "Kontoregistrierung in der Wiki ab sofort geschlossen",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134917-kontoregistrierung-in-der-wiki-ab-sofort-geschlossen/",
+   "datum": "2026-11-27T15:47:25+01:00"
+  },
+  {
+   "titel": "Änderung Öffnungszeiten Sung Mahis Invasion",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134916-%C3%A4nderung-%C3%B6ffnungszeiten-sung-mahis-invasion/",
+   "datum": "2026-11-27T12:24:21+01:00"
+  },
+  {
+   "titel": "Der Countdown läuft: Zeigt euer Metin2-Cosplay!",
+   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134910-der-countdown-l%C3%A4uft-zeigt-euer-metin2-cosplay/",
+   "datum": "2026-11-27T11:00:00+01:00"
+  },
+  {
    "titel": "Jetzt live: Yohara-Boost-Server & Twitch Drops",
    "url": "https://board.de.metin2.gameforge.com/index.php?thread/134868-jetzt-live-yohara-boost-server-twitch-drops/",
    "datum": "2026-11-13T10:02:34+01:00"
@@ -390,21 +405,6 @@
    "titel": "Der Countdown läuft: Teilt eure Erinnerungen!",
    "url": "https://board.de.metin2.gameforge.com/index.php?thread/134775-der-countdown-l%C3%A4uft-teilt-eure-erinnerungen/",
    "datum": "2026-10-23T11:00:00+02:00"
-  },
-  {
-   "titel": "Channel-Zugang – Start mit Release 26.2",
-   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134720-channel-zugang-start-mit-release-26-2/",
-   "datum": "2026-10-13T12:51:42+02:00"
-  },
-  {
-   "titel": "Update 26.2 – Aamon's Legacy",
-   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134696-update-26-2-aamon-s-legacy/",
-   "datum": "2026-10-08T10:00:00+02:00"
-  },
-  {
-   "titel": "Ankündigung: Altersverifizierung für Metin2",
-   "url": "https://board.de.metin2.gameforge.com/index.php?thread/134694-ank%C3%BCndigung-altersverifizierung-f%C3%BCr-metin2/",
-   "datum": "2026-10-07T16:31:40+02:00"
   }
  ]
 }
