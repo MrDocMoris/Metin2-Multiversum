@@ -1,7 +1,7 @@
 {
-  "build": 6,
-  "version": "1.6",
-  "size": 5951524,
-  "apk": "https://github.com/MrDocMoris/Metin2-Multiversum/releases/download/v1.6/Metin2-Multiversum.apk",
-  "notes": "Wiki-Bibliothek (Alchemie, Systeme, Klassen, Quests, Maps …) und Laufzeiten für Kostüme & Premium-Buffs"
+  "build": 7,
+  "version": "1.7",
+  "size": 5965818,
+  "apk": "https://github.com/MrDocMoris/Metin2-Multiversum/releases/download/v1.7/Metin2-Multiversum.apk",
+  "notes": "Buff-Timer, Dungeons, Tägliches, Quests, Kräuter, Talismane & Drachensteine, „Neu im Wiki“, Metin2-Design"
 }
