@@ -1991,7 +1991,8 @@ function dailySheet(r){
 
 /* ---- Quest-Liste (aus der Wiki-Bibliothek) ---- */
 let questF = 'a';
-function questPages(){ return LIB.idx ? LIB.idx.seiten.filter(e => e.q || e.g === 'Quests') : []; }
+const QRX = /quest|belohnung|auftrag|questgeber|ablauf/i;
+function questPages(){ return LIB.idx ? LIB.idx.seiten.filter(e => e.g === 'Quests' && QRX.test(e.s + ' ' + (e.h || []).join(' ')) && !/quest-?item|\(item\)/i.test(e.t) && !/Bild Beschreibung/.test(e.s)).sort((a, b) => a.t.localeCompare(b.t, 'de')) : []; }
 function questCard(){
   const a = Object.values(T.quests).filter(v => v === 'a').length, d = Object.values(T.quests).filter(v => v === 'd').length;
   return `<button class="row" data-tool="quests"><div class="ic">📜</div><div class="mid"><b>Quests</b><small>${a || d ? `${a} aktiv · ${d} erledigt` : 'Quests merken, mit Wiki-Anleitung'}</small></div><div class="rt">›</div></button>`;
@@ -1999,6 +2000,7 @@ function questCard(){
 function openQuests(fromHist){
   if(!fromHist) S.hist.push(f => openQuests(f));
   const all = questPages();
+  if(!all.length && !LIB.idx){ refreshLib(true).then(() => { if(S.view === 'sub' && LIB.idx) openQuests(true); }); }
   subPage({head:'<div style="font-size:26px">📜</div><h1>Quests</h1>', body:`
     ${all.length ? '' : '<div class="hint" style="margin-bottom:10px">📚 <span>Die Quest-Seiten kommen mit dem nächsten Wiki-Update in die Bibliothek. Bis dahin kannst du über die Suche im Wiki-Tab nach Quests suchen.</span></div>'}
     <div class="seg" id="q-f" style="margin-bottom:10px">${[['a', 'Aktiv'], ['all', 'Alle'], ['d', 'Erledigt']].map(([k, t]) => `<button data-k="${k}" class="${questF === k ? 'on' : ''}">${t}</button>`).join('')}</div>
@@ -2222,6 +2224,7 @@ $('#logo').onerror = () => { $('#logo').style.display = 'none'; };
 showView('home'); renderBadges();
 loadWiki();
 setTimeout(maybeRefreshOff, 600);
+setTimeout(() => refreshLib(false), 1500);
 setTimeout(() => { syncBgPrefs(); if(srvOn()) syncNow().catch(() => {}); }, 3000);
 setInterval(() => { if(document.hidden) return; renderBadges(); if(S.view === 'home') renderHome(); else if(S.view === 'events') renderEvents(); }, 60000);
 document.addEventListener('visibilitychange', () => { if(!document.hidden){ renderBadges(); maybeRefreshOff(); if(srvOn() && Date.now() - (S.cfg.srvSyncAt || 0) > 60000) syncNow().catch(() => {}); if(S.view === 'home') renderHome(); else if(S.view === 'events') renderEvents(); } });
