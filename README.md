@@ -9,8 +9,10 @@ Dein Metin2-Begleiter für den Server Ruby – im gleichen Stil und mit dem glei
 - **Farm-Log** mit Verlauf, Statistik nach Item und Monster
 - **Preise** in Yang mit Verlauf als Diagramm, Durchschnitt der letzten 30 Tage und Hinweis „günstig“ / „teuer“ (Eingabe auch als `1,5kk`, `250k`, `2 Won`)
 - **Wiki**: Monster, Metins, Fundorte und Drops aus dem offiziellen deutschen Metin2-Wiki, Item-Suche „wer droppt das?“, Vorschläge beim Tippen
-- **Wiki-Bibliothek**: die Themen-Seiten des Wikis (Drachensteinalchemie, Systeme, Klassen, Ausrüstung, Quests, Truhen, Maps …) zum Lesen in der App, mit Suche, Favoriten und Offline-Speicher
+- **Wiki-Bibliothek**: die Themen-Seiten des Wikis (Drachensteinalchemie, Systeme, Klassen, Ausrüstung, Quests, Truhen, Maps …) zum Lesen in der App, mit Suche, Favoriten, „Neu im Wiki“ und Offline-Speicher
 - **Werkzeuge**: Tages-Checkliste (setzt sich morgens zurück), Biologen-Begleiter mit Erinnerung nach der Wartezeit, Boss-Respawn-Timer, Fertigkeits-Planer (Bücher/Seelensteine mit Lese-Erinnerung), Laufzeiten für Pets, Reittiere, Kostüme und Premium-Buffs (z. B. Handschuh des Diebes, Autojagd) mit Ablauf-Erinnerung, Mondlicht-Abend mit Checkliste
+- **Weitere Werkzeuge**: Buff-Timer (Tränke & Elixiere, auf Wunsch wiederholend), Dungeon-Abklingzeiten, tägliche Belohnungen, Quest-Liste mit Wiki-Anleitung, Kräuter-Vorrat, Talismane & Drachensteine mit Zielen
+- **Zwei Designs**: „Multiversum“ (Sterne & Neon) und „Metin2“ (Stein, Gold & Rot), umschaltbar in den Einstellungen
 - **Kalender** als Monatsansicht (eigene Termine, große Events, Zusatz-Events, markierte Drops, Wartung)
 - **Maps** aus dem Wiki: alle Monster und Metins je Map nach Level, was dort droppt, eigene Notizen
 - **Serverstatus & Wartung** aus dem Forum, **Neuigkeiten** (Updates, neue Server)

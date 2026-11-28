@@ -34,7 +34,9 @@ GRUPPEN = {
 TIEFER = {'Systeme': 150, 'Übersichten': 260, 'Fähigkeiten': 60, 'Ausrüstung': 80, 'Klassen': 90, 'Maps': 0}
 EXTRA = [('Biologe', 'Übersichten'), ('Power-Mount-System', 'Systeme'), ('Inventar', 'Allgemein')]
 SKIP = re.compile(r'^(Spezial|Kategorie|Datei|File|Vorlage|Benutzer|Hilfe|MediaWiki|metin2|Diskussion)[: ]|^(GameMaster|Team|Wie_helfe|Botjagd|Bots_und_Cheater)', re.I)
-MAX_SEITEN = 700
+MAX_SEITEN = 1100
+QUEST_START = 'Übersichtsseite_Quests'
+QUEST_MAX = 350
 
 S = requests.Session()
 S.headers['User-Agent'] = UA
@@ -192,6 +194,40 @@ def main():
                 break
             take(page, group, False)
         print(f'{group}: {len(index) - n0} Unterseiten')
+
+    # 3) Quests: Übersicht -> Quest-Listen -> einzelne Quests (Gruppe „Quests“)
+    soup = get(QUEST_START)
+    lists = []
+    if soup and soup.find(id='mw-content-text'):
+        for a in soup.find(id='mw-content-text').find_all('a'):
+            p = page_of(a.get('href'))
+            if p and a.get_text(strip=True) and p not in lists:
+                lists.append(p)
+    print(f'Quest-Listen: {len(lists)}')
+    quests = []
+    for lp in lists:
+        time.sleep(PAUSE)
+        ls = get(lp)
+        c = ls and ls.find(id='mw-content-text')
+        if not c:
+            continue
+        for a in c.select('table a, li a'):
+            p = page_of(a.get('href'))
+            if p and a.get_text(strip=True) and p not in skip and p not in quests and p not in lists:
+                quests.append(p)
+    n0 = len(index)
+    for qp in quests:
+        if len(index) - n0 >= QUEST_MAX:
+            break
+        if qp in seen:  # schon unter anderer Gruppe -> als Quest markieren
+            for e in index:
+                if e['p'] == qp:
+                    e['q'] = 1
+            continue
+        take(qp, 'Quests', False)
+        if index and index[-1]['p'] == qp:
+            index[-1]['q'] = 1
+    print(f'Quests: {len(index) - n0} Seiten')
     if len(index) < 30:
         raise SystemExit('Zu wenig Seiten – Wiki-Aufbau geändert? Alte Daten bleiben.')
     # alte Seiten-Dateien entfernen, die nicht mehr vorkommen

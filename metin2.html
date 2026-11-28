@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>Metin2-Multiversum – dein Begleiter für Ruby</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="capacitor.js" onerror="this.remove()"></script>
 <style>
 :root{
@@ -283,6 +283,76 @@ textarea{min-height:64px;resize:vertical}
 .wikic td,.wikic th{border:1px solid var(--line);padding:5px 7px;vertical-align:top}
 .wikic th{background:var(--panel2)}
 .wikic center{display:block}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.tcell{display:flex;align-items:center;gap:9px;text-align:left;padding:9px 10px;border-radius:13px;background:rgba(27,23,56,.82);border:1px solid var(--line);min-width:0}
+.tcell:active{transform:scale(.97)}
+.tcell.hot{border-color:rgba(63,214,138,.6);box-shadow:0 0 10px rgba(63,214,138,.18)}
+.tcell .tic{font-size:20px;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--panel2);flex:none}
+.tcell .ttx{min-width:0;display:flex;flex-direction:column}
+.tcell b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tcell small{font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sess.moon{border-color:rgba(200,220,255,.5);background:linear-gradient(150deg,rgba(160,190,255,.16),rgba(167,139,255,.14))}
+
+/* ===== Design „Metin2“: dunkler Stein, Gold-Rahmen, Rot ===== */
+body.m2{
+  --bg:#110b07; --panel:#21160e; --panel2:#2c1e13; --line:#6e4e26; --text:#f2e4c4; --mute:#b39d7a;
+  --grad:linear-gradient(180deg,#f8dd84 0%,#d9a441 45%,#9a6418 100%); --glow:0 0 12px rgba(232,184,74,.3);
+  --acc:#e9bc55; --ok:#86c860; --bad:#e0503f; --gold:#f2c75c;
+  --m2red:linear-gradient(180deg,#b3352a 0%,#7c1a12 60%,#5a0f0a 100%);
+  --m2panel:linear-gradient(180deg,rgba(52,36,22,.94),rgba(28,19,12,.96));
+  --m2edge:inset 0 0 0 1px rgba(255,220,140,.08),inset 0 1px 0 rgba(255,230,170,.12),0 2px 8px rgba(0,0,0,.45);
+}
+body.m2{background:
+  radial-gradient(ellipse 120% 70% at 50% -10%,rgba(160,60,20,.28),transparent 60%),
+  radial-gradient(ellipse 90% 60% at 50% 120%,rgba(120,20,10,.35),transparent 60%),
+  repeating-linear-gradient(45deg,rgba(255,255,255,.012) 0 2px,transparent 2px 7px),
+  var(--bg);background-attachment:fixed}
+body.m2::before{opacity:.35;background-image:radial-gradient(1px 1px at 12% 18%,#ffcf7a,transparent),radial-gradient(1.5px 1.5px at 78% 22%,#ff9a4a,transparent),radial-gradient(1px 1px at 34% 72%,#ffd38a,transparent),radial-gradient(1.5px 1.5px at 88% 64%,#ff8a3a,transparent),radial-gradient(1px 1px at 55% 48%,#ffc56a,transparent),radial-gradient(1px 1px at 6% 88%,#ffb14a,transparent)}
+body.m2 h1,body.m2 h2,body.m2 .tile .tt,body.m2 .sess .top b{font-family:"Cinzel","Space Grotesk",serif;letter-spacing:.02em}
+body.m2 .hero h1,body.m2 .subhead h1{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 1px 0 rgba(0,0,0,.6))}
+body.m2 h3{color:var(--gold);letter-spacing:.14em;font-family:"Cinzel",serif;font-weight:700;font-size:12.5px}
+body.m2 h3::before{content:"❖ ";color:#a33a2b}
+/* Rahmen wie im Spiel-Fenster */
+body.m2 .row,body.m2 .tcell,body.m2 .ev,body.m2 .li,body.m2 .hint,body.m2 .kv div,body.m2 .tile,body.m2 .card,body.m2 .cd{
+  background:var(--m2panel);border:1px solid #6e4e26;box-shadow:var(--m2edge);border-radius:8px}
+body.m2 .tile::after{background:radial-gradient(rgba(233,188,85,.18),transparent 70%)}
+body.m2 .tcell .tic,body.m2 .row .ic,body.m2 .tile .ti{background:radial-gradient(circle at 50% 35%,#4a3420,#1c120b);border:1px solid #8a6430;border-radius:6px;box-shadow:inset 0 0 6px rgba(0,0,0,.6)}
+body.m2 .tcell.hot,body.m2 .ev.live,body.m2 .cd.live{border-color:#86c860;box-shadow:var(--m2edge),0 0 10px rgba(134,200,96,.25)}
+body.m2 .cd{background:linear-gradient(180deg,rgba(90,30,18,.9),rgba(40,16,10,.95));border-color:#9a6a2a}
+body.m2 .sess{background:linear-gradient(180deg,rgba(70,44,20,.95),rgba(32,20,10,.96));border:1px solid #c8973c;box-shadow:inset 0 0 0 2px rgba(0,0,0,.4),inset 0 0 0 3px rgba(200,151,60,.25),0 0 16px rgba(200,140,40,.18);border-radius:10px}
+body.m2 .hstats>div{background:var(--m2panel);border:1px solid #6e4e26;box-shadow:var(--m2edge);border-radius:8px}
+body.m2 .hstats b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* Knöpfe */
+body.m2 .btn{background:linear-gradient(180deg,#3c2a1a,#22170e);border:1px solid #7a5628;border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,220,150,.12)}
+body.m2 .btn.pri,body.m2 .kbtn{background:var(--grad);color:#2a1606;border:1px solid #f5d27a;border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 2px 6px rgba(0,0,0,.5);text-shadow:0 1px 0 rgba(255,240,200,.4)}
+body.m2 .btn.del{background:var(--m2red);color:#ffe2b0;border-color:#c0583e}
+body.m2 .chip,body.m2 .seg button,body.m2 .daysel button,body.m2 .dchips button,body.m2 .ilist button{background:linear-gradient(180deg,#33241a,#1d140d);border:1px solid #6e4e26;border-radius:6px}
+body.m2 .chip.on,body.m2 .seg button.on,body.m2 .daysel button.on{background:var(--m2red);color:#ffe7b5;border-color:#d9a441;box-shadow:inset 0 1px 0 rgba(255,200,150,.25),0 0 8px rgba(179,53,42,.35);font-weight:700}
+body.m2 .ilist button.have{border-color:#e9bc55;color:#f2c75c}
+body.m2 .tog.on{background:var(--m2red);border-color:#d9a441}
+body.m2 input[type=text],body.m2 input[type=date],body.m2 input[type=time],body.m2 input[type=password],body.m2 input[type=datetime-local],body.m2 select,body.m2 textarea,body.m2 .sbox input{background:#140d08;border:1px solid #7a5628;border-radius:5px;box-shadow:inset 0 1px 4px rgba(0,0,0,.6)}
+body.m2 .sbox{background:linear-gradient(var(--bg) 70%,transparent)}
+/* Navigation unten wie eine Holzleiste */
+body.m2 nav{background:linear-gradient(180deg,#2e1f12,#170f09);border-top:2px solid transparent;border-image:linear-gradient(90deg,#5a3a14,#f2c75c,#5a3a14) 1;box-shadow:0 -4px 14px rgba(0,0,0,.6)}
+body.m2 nav button.on{color:#f2c75c;text-shadow:0 0 10px rgba(242,199,92,.55)}
+body.m2 nav button.on svg{filter:drop-shadow(0 0 5px rgba(242,199,92,.6))}
+body.m2 nav .badge{background:var(--m2red);color:#ffe7b5;border:1px solid #d9a441}
+/* Plus-Knopf als roter Edelstein */
+body.m2 #fab{background:radial-gradient(circle at 35% 30%,#ff8a6a,#c0291b 45%,#5c0b06 100%);color:#ffe7b5;border:3px solid #d9a441;box-shadow:0 0 0 2px #3a2410,0 0 20px rgba(220,60,30,.55)}
+body.m2 .gearbtn,body.m2 .iconbtn{background:radial-gradient(circle at 50% 35%,#4a3420,#1c120b);border:1px solid #9a6a2a;color:#f2c75c}
+/* Fenster von unten wie ein Spiel-Dialog */
+body.m2 #sheet{background:linear-gradient(180deg,#2a1c10,#160e08);border-top:2px solid #c8973c;box-shadow:0 -8px 30px rgba(0,0,0,.7);border-radius:10px 10px 0 0}
+body.m2 #sheet .grab{background:#c8973c}
+body.m2 #toast{background:linear-gradient(180deg,#3a2614,#1d130b);border:1px solid #c8973c;color:#f8e6bf}
+body.m2 .bar2{background:#140d08;border:1px solid #4a3218}
+body.m2 .bar2 i{background:linear-gradient(90deg,#8a1a10,#e0503f 50%,#f2c75c)}
+body.m2 .tag.lv{background:#1d140d;color:#f2c75c;border-color:#6e4e26}
+body.m2 .wikic a[data-w],body.m2 .wikic a[href]{color:#f2c75c;border-bottom-color:rgba(242,199,92,.5)}
+body.m2 .wikic th{background:#33241a}
+body.m2 .chart .ln{stroke:#e9bc55}
+body.m2 .hlogo{filter:drop-shadow(0 0 8px rgba(233,188,85,.45)) sepia(.35) saturate(1.2) hue-rotate(-12deg)}
+body.m2 .sess.moon{background:linear-gradient(180deg,rgba(34,36,64,.95),rgba(16,14,28,.97));border-color:#8f9ad8;box-shadow:inset 0 0 0 2px rgba(0,0,0,.4),0 0 16px rgba(120,140,255,.18)}
+body.m2 .sess.moon .li{background:rgba(10,8,20,.5)}
 </style>
 </head>
 <body>
@@ -1092,12 +1162,22 @@ if(NATIVE){
   try{ plug('App').addListener('backButton', () => { if($('#sheet').classList.contains('on')) closeSheet(); else if(S.view === 'sub') goBack(); else if(S.view !== 'home') showView('home'); else plug('App').exitApp(); }); }catch(e){}
 }
 
+/* ================= Design ================= */
+function applyTheme(){
+  const m2 = S.cfg.theme === 'm2';
+  document.body.classList.toggle('m2', m2);
+  const mt = document.querySelector('meta[name=theme-color]'); if(mt) mt.content = m2 ? '#110b07' : '#0b0a1a';
+}
+applyTheme();
+
 /* ================= Einstellungen ================= */
 const CLASSES = ['Krieger', 'Ninja', 'Sura', 'Schamane', 'Lykaner'];
 $('#gear').onclick = () => {
   const c = S.cfg;
   openSheet(`<h2>Einstellungen</h2>
-    <h3 style="margin-top:4px">Charakter</h3>
+    <h3 style="margin-top:4px">Design</h3>
+    <div class="tiles" id="c-theme">${[['mv', 'Multiversum', 'Sterne & Neon', 'linear-gradient(135deg,#0b0a1a,#2b1c78 60%,#6fe3ff)'], ['m2', 'Metin2', 'Stein, Gold & Rot', 'linear-gradient(135deg,#110b07,#5a1a10 55%,#d9a441)']].map(([k, t, d, bg]) => `<button class="tile${(c.theme || 'mv') === k ? ' on' : ''}" data-k="${k}" style="${(c.theme || 'mv') === k ? 'outline:2px solid var(--acc);' : ''}"><div class="ti" style="background:${bg}"></div><div class="tt">${t}</div><div class="ts">${d}</div></button>`).join('')}</div>
+    <h3>Charakter</h3>
     <div class="two"><div><label class="f">Name</label><input type="text" id="c-char" value="${esc(c.char)}" placeholder="dein Charname"></div><div style="flex:0 0 90px"><label class="f">Level</label><input type="text" inputmode="numeric" id="c-lvl" value="${esc(c.lvl)}"></div></div>
     <label class="f">Klasse</label><div class="seg" id="c-cls">${CLASSES.map(k => `<button class="${c.cls === k ? 'on' : ''}">${k}</button>`).join('')}</div>
     <label class="f">Server</label><input type="text" id="c-srv" value="${esc(c.server)}">
@@ -1111,6 +1191,7 @@ $('#gear').onclick = () => {
     <h3>Erinnerungen der Werkzeuge</h3>
     <div class="muted" style="margin-bottom:-4px">🧪 Biologe</div>${remRow('bio')}
     <div class="muted" style="margin:10px 0 -4px">📘 Fertigkeiten</div>${remRow('skill')}
+    <div class="muted" style="margin:10px 0 -4px">🏰 Dungeons</div>${remRow('dungeon')}
     <div class="muted" style="margin:10px 0 -4px">⏳ Pets, Reittiere, Kostüme & Premium-Buffs</div>${remRow('pet')}
     <label class="f" style="margin-top:14px">Vorlauf für Event-Erinnerungen</label><div class="seg" id="c-rem">${REMINDS.filter(r => r[0] >= 0).map(([v, t]) => `<button data-v="${v}" class="${c.remind === v ? 'on' : ''}">${t}</button>`).join('')}</div>
     <h3>Event-Termine</h3>
@@ -1127,6 +1208,7 @@ $('#gear').onclick = () => {
     <p class="muted" style="font-size:12px;margin-top:12px">Metin2-Multiversum ist eine private Fan-App und hat nichts mit Gameforge oder Webzen zu tun. Monster- und Drop-Daten: offizielles Metin2-Wiki.</p>`);
   const grab = () => { c.char = $('#c-char').value.trim(); c.lvl = $('#c-lvl').value.trim(); c.server = $('#c-srv').value.trim() || 'Ruby'; saveCfg(); renderAll(); };
   ['#c-char', '#c-lvl', '#c-srv'].forEach(s => $(s).onchange = grab);
+  $$('#c-theme [data-k]').forEach(b => b.onclick = () => { c.theme = b.dataset.k; saveCfg(); applyTheme(); $$('#c-theme [data-k]').forEach(x => x.style.outline = x === b ? '2px solid var(--acc)' : ''); });
   $$('#c-cls button').forEach(b => b.onclick = () => { c.cls = b.textContent; $$('#c-cls button').forEach(x => x.classList.toggle('on', x === b)); saveCfg(); renderAll(); });
   $$('#c-rem button').forEach(b => b.onclick = () => { c.remind = +b.dataset.v; $$('#c-rem button').forEach(x => x.classList.toggle('on', x === b)); saveCfg(); });
   $('#c-not').onclick = async e => { c.notify = !c.notify; e.currentTarget.classList.toggle('on', c.notify); if(c.notify) await askNotify(true); saveCfg(); renderNotifyInfo(); };
@@ -1247,7 +1329,7 @@ async function doSchedule(){
       list.push({id:hashId(o.e.id + o.ds + o.e.start), title:o.off === 'news' ? `🎉 Event startet: ${o.e.name}` : `🎁 ${o.e.name}-Event ${lead ? 'in ' + lead + ' Min' : 'startet'}`,
         body:o.off === 'news' ? `${o.e.note || ''} – bis ${new Date(o.end).toLocaleString('de-DE', {weekday:'short', day:'numeric', month:'numeric', hour:'2-digit', minute:'2-digit'})} Uhr` : `${o.e.start}–${o.e.end} Uhr auf ${srv} · ${o.e.note}`, schedule:{at:new Date(at), allowWhileIdle:true}, extra:{off:1}});
     });
-    const tools = toolReminders(now);
+    const tools = toolReminders(now).concat(toolReminders2(now));
     list.sort((a, b) => a.schedule.at - b.schedule.at);
     const all = tools.concat(list.slice(0, Math.max(0, 60 - tools.length)));
     if(all.length) await LN.schedule({notifications:all});
@@ -1280,7 +1362,7 @@ const saveT = k => { store('m2_' + k, T[k]); scheduleReminders(); autoBackup(); 
 
 
 /* ---- Helfer: Dauer-Eingabe, Restzeit aus dem Spiel, Erinnerungs-Einstellung ---- */
-const DEF_REM = {bio:{on:true, lead:0}, skill:{on:true, lead:0}, pet:{on:true, days:2, h1:true}};
+const DEF_REM = {bio:{on:true, lead:0}, skill:{on:true, lead:0}, pet:{on:true, days:2, h1:true}, dungeon:{on:true, lead:0}};
 function remCfg(k){ S.cfg.rem = S.cfg.rem || {}; S.cfg.rem[k] = Object.assign({}, DEF_REM[k], S.cfg.rem[k] || {}); return S.cfg.rem[k]; }
 const fmtCd = m => m >= 1440 && m % 1440 === 0 ? (m / 1440) + (m === 1440 ? ' Tag' : ' Tage') : m >= 60 ? `${Math.floor(m / 60)} Std${m % 60 ? ' ' + (m % 60) + ' Min' : ''}` : m + ' Min';
 function durFields(id, min, big){
@@ -1530,7 +1612,7 @@ function moonCard(){
   const soon = m.start - Date.now() < 12 * 3600e3, live = m.start <= Date.now();
   if(!soon) return '';
   const done = new Set(T.moon.done[m.ds] || []);
-  return `<div class="sess" style="border-color:rgba(200,220,255,.5);background:linear-gradient(150deg,rgba(160,190,255,.16),rgba(167,139,255,.14))">
+  return `<div class="sess moon">
     <div class="top"><div style="font-size:28px">🌙</div><div style="flex:1"><b>Mondlicht-Abend</b><small>${live ? 'läuft noch ' + fmtDur(m.end - Date.now()) : `ab ${hm(new Date(m.start))} Uhr · in ${fmtDur(m.start - Date.now())}`}</small></div></div>
     <div style="margin-top:8px">${T.moon.list.map((t, i) => `<div class="li${done.has(i) ? ' done' : ''}" style="background:rgba(11,10,26,.35)"><button class="ck" data-moon="${i}" data-ds="${m.ds}"><i></i></button><div class="tx">${esc(t)}</div></div>`).join('')}</div>
     <button class="chip" id="moon-edit" style="margin-top:4px">Checkliste bearbeiten</button></div>`;
@@ -1626,7 +1708,8 @@ function openMap(name, fromHist){
 function serverStatus(){
   const w = S.off && S.off.wartung; if(!w) return null;
   const now = Date.now(), st = w.naechste ? new Date(w.naechste).getTime() : null, end = w.beendet ? new Date(w.beendet).getTime() : null;
-  if(st && now >= st && (!end || end < st)) return {kind:'bad', icon:'🛠️', text:`Wartung läuft seit ${hm(new Date(st))} Uhr`};
+  if(st && now >= st && now < st + 8 * 3600e3 && (!end || end < st)) return {kind:'bad', icon:'🛠️', text:`Wartung läuft seit ${hm(new Date(st))} Uhr`};
+  if(st && now >= st) return {kind:'', icon:'🟢', text:`Server online · letzte Wartung am ${new Date(st).toLocaleDateString('de-DE')}`};
   if(st && st > now) return {kind:st - now < 864e5 ? 'warn' : '', icon:'🛠️', text:`Nächste Wartung: ${fmtDay(ymd(new Date(st)))} um ${hm(new Date(st))} Uhr`};
   if(end) return {kind:'', icon:'🟢', text:`Server online · letzte Wartung am ${new Date(end).toLocaleDateString('de-DE')} beendet`};
   return null;
@@ -1643,12 +1726,30 @@ function wireNews(root){
 }
 
 /* ---- Werkzeug-Kacheln auf der Startseite ---- */
+function toolStatus(k){
+  const st = {
+    check:() => { const n = T.check.items.length, d = checkState().filter(i => i < n).length; return n ? (d === n ? '✓ alles erledigt' : `${d}/${n} erledigt`) : 'Aufgaben festlegen'; },
+    bio:() => T.bio.item ? (bioReady() ? '🟢 abgeben möglich' : '⏳ ' + fmtDur(bioNext() - Date.now())) : 'Aufgabe eintragen',
+    buffs:() => { const r = T.buffs.filter(buffRun); return r.length ? '⏳ ' + r.map(b => `${b.icon}${fmtDur(buffNextEnd(b) - Date.now())}`).join(' ') : 'Start mit einem Tipp'; },
+    dungeons:() => { if(!T.dungeons.length) return 'Abklingzeiten'; const w = T.dungeons.filter(d => dgNext(d) > Date.now()).sort((a, b) => dgNext(a) - dgNext(b)); const r = T.dungeons.length - w.length; return r ? `🟢 ${r} bereit` : '⏳ ' + fmtDur(dgNext(w[0]) - Date.now()); },
+    boss:() => { const r = T.bosses.filter(b => b.killed && bossLeft(b) > 0).sort((a, b) => bossLeft(a) - bossLeft(b)); return r.length ? `⏳ ${r[0].name} ${fmtDur(bossLeft(r[0]))}` : T.bosses.length ? `${T.bosses.length} Bosse` : 'Respawn merken'; },
+    skills:() => { const r = T.skills.filter(s => s.stage >= 20 && s.stage < 40 && skillReady(s)).length; return r ? `🟢 ${r}× lesbar` : T.skills.length ? `${T.skills.length} Fertigkeiten` : 'Bücher & Seelensteine'; },
+    pets:() => { const s = T.pets.filter(p => petLeft(p) != null).sort((a, b) => petLeft(a) - petLeft(b))[0]; return s ? (petLeft(s) > 0 ? `${kindIcon(s.kind)} ${fmtDur(petLeft(s))}` : `⛔ ${s.name}`) : 'Pets, Kostüme, Buffs'; },
+    daily:() => { const o = T.daily.filter(r => !dailyDone(r)).length; return T.daily.length ? (o ? `${o} offen` : '✓ abgeholt') : 'Täglich abholen'; },
+    quests:() => { const a = Object.values(T.quests).filter(v => v === 'a').length; return a ? `${a} aktiv` : 'mit Wiki-Anleitung'; },
+    herbs:() => T.herbs.length ? `${T.herbs.reduce((s, h) => s + (h.qty || 0), 0)} im Vorrat` : 'Vorrat',
+    gear:() => T.gear.length ? `${T.gear.length} Einträge` : 'Stufen & Ziele',
+    cal:() => 'Monatsansicht', maps:() => 'aus dem Wiki',
+  };
+  try{ return st[k](); }catch(e){ return ''; }
+}
+const TOOL_LIST = [['check', '✅', 'Checkliste'], ['bio', '🧪', 'Biologe'], ['buffs', '⚗️', 'Buff-Timer'], ['dungeons', '🏰', 'Dungeons'], ['boss', '👹', 'Boss-Timer'], ['skills', '📘', 'Fertigkeiten'], ['pets', '⏳', 'Laufzeiten'], ['daily', '🎁', 'Täglich'], ['quests', '📜', 'Quests'], ['gear', '🔮', 'Talisman & Steine'], ['herbs', '🌿', 'Kräuter'], ['cal', '🗓️', 'Kalender'], ['maps', '🗺️', 'Maps']];
 function toolsBlock(){
-  return `<h3>🧰 Werkzeuge</h3>${checkCard()}${bioCard()}${bossCard()}${skillCard()}${petCard()}
-    <div class="two" style="margin-top:2px"><button class="row" data-tool="cal" style="margin:0"><div class="ic">🗓️</div><div class="mid"><b>Kalender</b><small>Monatsansicht</small></div></button><button class="row" data-tool="maps" style="margin:0"><div class="ic">🗺️</div><div class="mid"><b>Maps</b><small>aus dem Wiki</small></div></button></div>`;
+  return `<h3>🧰 Werkzeuge</h3><div class="tgrid">${TOOL_LIST.map(([k, ic, t]) => { const s = toolStatus(k); const hot = /🟢|⛔/.test(s);
+    return `<button class="tcell${hot ? ' hot' : ''}" data-tool="${k}"><span class="tic">${ic}</span><span class="ttx"><b>${t}</b><small>${esc(s)}</small></span></button>`; }).join('')}</div>`;
 }
 function wireTools(root){
-  $$(root + ' [data-tool]').forEach(b => b.onclick = () => ({check:openCheck, bio:openBio, boss:openBoss, pets:openPets, skills:openSkills, cal:openCal, maps:() => { wikiF = 'maps'; showView('wiki'); }})[b.dataset.tool]());
+  $$(root + ' [data-tool]').forEach(b => b.onclick = () => ({check:openCheck, bio:openBio, boss:openBoss, pets:openPets, skills:openSkills, cal:openCal, buffs:openBuffs, dungeons:openDungeons, daily:openDaily, quests:openQuests, herbs:openHerbs, gear:openGear, maps:() => { wikiF = 'maps'; showView('wiki'); }})[b.dataset.tool]());
 }
 
 /* ---- Erinnerungen der Werkzeuge (werden in doSchedule eingeplant) ---- */
@@ -1678,7 +1779,7 @@ function syncBgPrefs(){
 /* ================= Wiki-Bibliothek: Themen-Seiten (Alchemie, Systeme, Klassen, Quests, Maps …) ================= */
 const LIB_IDX = 'https://raw.githubusercontent.com/MrDocMoris/Metin2-Multiversum/main/daten/seiten.json';
 const LIB_PAGE = 'https://raw.githubusercontent.com/MrDocMoris/Metin2-Multiversum/main/daten/seiten/';
-const LIB_GROUPS = [['Aktuell', '📣'], ['Klassen', '⚔️'], ['Fähigkeiten', '🎣'], ['Ausrüstung', '💍'], ['Systeme', '⚙️'], ['Übersichten', '📚'], ['Maps', '🗺️'], ['Allgemein', 'ℹ️']];
+const LIB_GROUPS = [['Aktuell', '📣'], ['Quests', '📜'], ['Klassen', '⚔️'], ['Fähigkeiten', '🎣'], ['Ausrüstung', '💍'], ['Systeme', '⚙️'], ['Übersichten', '📚'], ['Maps', '🗺️'], ['Allgemein', 'ℹ️']];
 const LIB = {idx:store('m2_libidx') || null, byPage:null, favs:store('m2_libfav') || [], recent:store('m2_librecent') || []};
 function libPrep(){ LIB.byPage = new Map(((LIB.idx && LIB.idx.seiten) || []).map(e => [e.p.toLowerCase(), e])); (LIB.idx && LIB.idx.seiten || []).forEach(e => { e._k = (e.t + ' ' + (e.h || []).join(' ') + ' ' + e.s).toLowerCase(); }); }
 libPrep();
@@ -1690,6 +1791,11 @@ async function refreshLib(manual){
     if(!r.ok) throw new Error(r.status === 404 ? 'Die Wiki-Bibliothek wird gerade erstellt' : 'Fehler ' + r.status);
     const d = await r.json(); store('m2_libcheck', Date.now());
     const changed = !LIB.idx || LIB.idx.stand !== d.stand;
+    if(changed && LIB.idx){ // Neu & geändert seit dem letzten Stand merken
+      const old = new Map(LIB.idx.seiten.map(e => [e.id, e.n]));
+      const neu = d.seiten.filter(e => !old.has(e.id)).map(e => e.p), mod = d.seiten.filter(e => old.has(e.id) && Math.abs(old.get(e.id) - e.n) > 40).map(e => e.p);
+      if(neu.length || mod.length) store('m2_libnew', {stand:d.stand, neu, mod});
+    }
     LIB.idx = d; libPrep(); store('m2_libidx', d);
     if(changed) renderWikiIfOpen();
     if(manual) toast(`📚 ${d.seiten.length} Wiki-Seiten verfügbar`);
@@ -1718,11 +1824,15 @@ function renderLibHome(){
   const el = $('#w-res');
   if(!LIB.idx){ el.innerHTML = `<div class="empty">Die Wiki-Bibliothek ist noch nicht geladen.<br><br><button class="btn pri" id="lib-load" style="max-width:240px">Jetzt laden</button></div>`; $('#lib-load').onclick = () => refreshLib(true); return; }
   const all = LIB.idx.seiten, fav = all.filter(e => LIB.favs.includes(e.p)), rec = LIB.recent.map(p => libPage(p)).filter(Boolean).slice(0, 5);
-  el.innerHTML = `${fav.length ? '<h3 style="margin-top:0">⭐ Favoriten</h3>' + libList(fav) : ''}${rec.length ? '<h3>🕘 Zuletzt gelesen</h3>' + libList(rec) : ''}
+  const nw = store('m2_libnew'), nwList = nw ? [...nw.neu.map(p => [p, 'neu']), ...nw.mod.map(p => [p, 'geändert'])].map(([p, k]) => { const e = libPage(p); return e ? Object.assign({}, e, {_tag:k}) : null; }).filter(Boolean) : [];
+  el.innerHTML = `${nwList.length ? `<h3 style="margin-top:0">🆕 Neu im Wiki <span class="muted" style="text-transform:none;letter-spacing:0">· seit ${fmtDate(nw.stand)}</span></h3>` + nwList.slice(0, 6).map(e => `<button class="row" data-lib="${esc(e.p)}"><div class="ic">${e._tag === 'neu' ? '🆕' : '✏️'}</div><div class="mid"><b>${esc(e.t)} <span class="tag ${e._tag === 'neu' ? 'cheap' : 'lv'}">${e._tag}</span></b><small>${esc(e.s.slice(0, 80))}</small></div></button>`).join('') + (nwList.length > 6 ? `<button class="chip" id="lib-newall" style="margin-bottom:8px">Alle ${nwList.length} anzeigen</button>` : '') + `<button class="chip" id="lib-newok" style="margin:0 0 8px 6px">Gelesen ✓</button>` : ''}
+  ${fav.length ? `<h3${nwList.length ? '' : ' style="margin-top:0"'}>⭐ Favoriten</h3>` + libList(fav) : ''}${rec.length ? '<h3>🕘 Zuletzt gelesen</h3>' + libList(rec) : ''}
     <h3${fav.length || rec.length ? '' : ' style="margin-top:0"'}>📚 Themen</h3>
     <div class="tiles">${LIB_GROUPS.map(([g, ic]) => { const n = all.filter(e => e.g === g).length; return n ? `<button class="tile" data-lgrp="${g}"><div class="ti" style="background:var(--panel2)">${ic}</div><div class="tt">${g}</div><div class="ts">${n} Seiten</div></button>` : ''; }).join('')}</div>
     <p class="muted" style="font-size:12px;margin-top:10px">Aus dem offiziellen Metin2-Wiki · Stand ${fmtDate(LIB.idx.stand)} · gelesene Seiten bleiben offline verfügbar</p>`;
   $$('#w-res [data-lgrp]').forEach(b => b.onclick = () => openLibGroup(b.dataset.lgrp));
+  if($('#lib-newok')) $('#lib-newok').onclick = () => { localStorage.removeItem('m2_libnew'); renderLibHome(); };
+  if($('#lib-newall')) $('#lib-newall').onclick = () => { $('#lib-newall').remove(); $$('#w-res h3')[0].insertAdjacentHTML('afterend', ''); const extra = nwList.slice(6).map(e => `<button class="row" data-lib="${esc(e.p)}"><div class="ic">${e._tag === 'neu' ? '🆕' : '✏️'}</div><div class="mid"><b>${esc(e.t)} <span class="tag ${e._tag === 'neu' ? 'cheap' : 'lv'}">${e._tag}</span></b><small>${esc(e.s.slice(0, 80))}</small></div></button>`).join(''); $('#lib-newok').insertAdjacentHTML('beforebegin', extra); $$('#w-res [data-lib]').forEach(b => b.onclick = () => openLib(b.dataset.lib)); };
   $$('#w-res [data-lib]').forEach(b => b.onclick = () => openLib(b.dataset.lib));
 }
 function openLibGroup(g, fromHist){
@@ -1768,6 +1878,229 @@ function libSearch(q, max = 12){
   return t.concat(h).slice(0, max);
 }
 
+/* ================= Werkzeuge 2: Buff-Timer, Dungeons, Tägliches, Quests, Kräuter, Talismane & Drachensteine ================= */
+Object.assign(T, {
+  buffs: store('m2_buffs') || [
+    {id:'b1', icon:'🧪', name:'Trank', min:30, lead:1, rep:false, start:0},
+    {id:'b2', icon:'✨', name:'Elixier', min:60, lead:1, rep:false, start:0},
+  ],
+  dungeons: store('m2_dungeons') || [],
+  daily: store('m2_daily') || [],
+  quests: store('m2_quests') || {},   // Wiki-Seite -> 'a' (aktiv) | 'd' (erledigt)
+  herbs: store('m2_herbs') || [],
+  gear: store('m2_gear') || [],
+});
+
+/* ---- Buff-Timer ---- */
+const buffEnd = b => b.start ? b.start + b.min * 60000 : 0;
+const buffRun = b => b.start && (b.rep ? Date.now() < b.start + 4 * 3600e3 : Date.now() < buffEnd(b));
+function buffNextEnd(b){ if(!b.start) return 0; const d = b.min * 60000; if(!b.rep) return buffEnd(b); const k = Math.max(1, Math.ceil((Date.now() - b.start) / d)); return b.start + k * d; }
+function buffCard(){
+  const run = T.buffs.filter(buffRun);
+  return `<button class="row" data-tool="buffs"><div class="ic">🧪</div><div class="mid"><b>Buff-Timer</b><small>${run.length ? run.map(b => `${b.icon} ${esc(b.name)} ${fmtDur(buffNextEnd(b) - Date.now())}`).join(' · ') : 'Tränke & Elixiere mit einem Tipp starten'}</small></div><div class="rt">›</div></button>`;
+}
+function openBuffs(fromHist){
+  if(!fromHist) S.hist.push(f => openBuffs(f));
+  subPage({head:'<div style="font-size:26px">🧪</div><h1>Buff-Timer</h1>', body:`
+    <p class="muted" style="margin:0 0 10px">Tippe beim Benutzen auf <b>Start</b>. Kurz vor dem Ablauf kommt eine Push-Nachricht zum Nachwerfen.</p>
+    ${T.buffs.map(b => { const run = buffRun(b), ne = buffNextEnd(b);
+      return `<div class="row" style="cursor:default${run ? ';border-color:var(--ok)' : ''}"><div class="ic">${esc(b.icon)}</div><div class="mid"><b>${esc(b.name)}</b><small>${fmtCd(b.min)}${b.rep ? ' · 🔁 wiederholt' : ''} · Push ${b.lead ? b.lead + ' Min vorher' : 'beim Ablauf'}</small>
+        ${run ? `<div style="font-size:15px;margin-top:3px;color:var(--ok)">⏳ <span data-until="${ne}" data-done="abgelaufen">${fmtClock(ne - Date.now())}</span></div>` : ''}</div>
+        <div style="display:flex;flex-direction:column;gap:6px"><button class="chip ${run ? '' : 'on'}" data-bgo="${b.id}">${run ? 'Stopp' : 'Start'}</button><button class="chip" data-bed="${b.id}">✎</button></div></div>`; }).join('')}
+    <div class="btns"><button class="btn pri" id="bf-add">＋ Buff hinzufügen</button></div>`});
+  $$('#sub [data-bgo]').forEach(x => x.onclick = () => { const b = T.buffs.find(y => y.id === x.dataset.bgo); b.start = buffRun(b) ? 0 : Date.now(); saveT('buffs'); if(b.start){ toast(`${b.icon} ${b.name} läuft – Push in ${fmtCd(Math.max(0, b.min - b.lead))}`); if(NATIVE) askNotify(false); } openBuffs(true); });
+  $$('#sub [data-bed]').forEach(x => x.onclick = () => buffSheet(T.buffs.find(y => y.id === x.dataset.bed)));
+  $('#bf-add').onclick = () => buffSheet();
+}
+function buffSheet(b){
+  const isNew = !b; b = b || {id:uid(), icon:'🧪', name:'', min:30, lead:1, rep:false, start:0};
+  openSheet(`<h2>${isNew ? 'Buff hinzufügen' : esc(b.name)}</h2>
+    <div class="two"><div style="flex:0 0 64px"><label class="f">Symbol</label><input type="text" id="bf-i" value="${esc(b.icon)}" style="text-align:center;font-size:20px;padding:7px"></div><div><label class="f">Name</label><input type="text" id="bf-n" value="${esc(b.name)}" placeholder="z. B. Roter Trank (G)"></div></div>
+    <label class="f">Wirkungsdauer</label>${durFields('bf-d', b.min)}
+    <label class="f">Push</label><div class="seg" id="bf-l">${[[0, 'Beim Ablauf'], [1, '1 Min vorher'], [2, '2 Min'], [5, '5 Min']].map(([v, t]) => `<button data-v="${v}" class="${b.lead === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <div class="sw"><div>Automatisch wiederholen<div class="muted">erinnert immer wieder, bis zu 4 Stunden lang</div></div><button class="tog${b.rep ? ' on' : ''}" id="bf-r"></button></div>
+    <div class="btns"><button class="btn pri" id="bf-s">Speichern</button>${isNew ? '' : '<button class="btn del" id="bf-x">Löschen</button>'}</div>`);
+  $$('#bf-l button').forEach(x => x.onclick = () => { b.lead = +x.dataset.v; $$('#bf-l button').forEach(y => y.classList.toggle('on', y === x)); });
+  $('#bf-r').onclick = e => { b.rep = !b.rep; e.currentTarget.classList.toggle('on', b.rep); };
+  $('#bf-s').onclick = () => { b.icon = $('#bf-i').value.trim() || '🧪'; b.name = $('#bf-n').value.trim(); b.min = readDur('bf-d') || 30; if(!b.name){ toast('Bitte einen Namen eingeben'); return; } if(isNew) T.buffs.push(b); saveT('buffs'); closeSheet(); openBuffs(true); };
+  if(!isNew) $('#bf-x').onclick = () => { if(!confirmTwice('#bf-x')) return; T.buffs = T.buffs.filter(x => x.id !== b.id); saveT('buffs'); closeSheet(); openBuffs(true); };
+}
+
+/* ---- Dungeon-Abklingzeiten ---- */
+const dgNext = d => d.next != null ? d.next : (d.done ? d.done + d.cd * 60000 : 0);
+function dungeonCard(){
+  const w = T.dungeons.filter(d => dgNext(d) > Date.now()).sort((a, b) => dgNext(a) - dgNext(b));
+  const ready = T.dungeons.length - w.length;
+  return `<button class="row" data-tool="dungeons"><div class="ic">🏰</div><div class="mid"><b>Dungeons</b><small>${T.dungeons.length ? `${ready ? `<span style="color:var(--ok)">${ready} bereit</span>` : ''}${ready && w.length ? ' · ' : ''}${w.length ? `${esc(w[0].name)} in ${fmtDur(dgNext(w[0]) - Date.now())}` : ''}` : 'Abklingzeiten im Blick'}</small></div><div class="rt">›</div></button>`;
+}
+function openDungeons(fromHist){
+  if(!fromHist) S.hist.push(f => openDungeons(f));
+  const list = T.dungeons.slice().sort((a, b) => dgNext(a) - dgNext(b));
+  subPage({head:'<div style="font-size:26px">🏰</div><h1>Dungeons</h1>', body:`
+    <p class="muted" style="margin:0 0 10px">Nach dem Durchlauf auf <b>Gemacht</b> tippen – die App meldet sich, wenn du wieder rein kannst.</p>
+    ${list.length ? list.map(d => { const n = dgNext(d), ok = n <= Date.now();
+      return `<div class="row" style="cursor:default"><div class="ic">🏰</div><div class="mid"><b>${esc(d.name)}</b><small>Abklingzeit ${fmtCd(d.cd)}${d.runs ? ` · ${d.runs}× gemacht` : ''}</small>
+        <div style="font-size:13px;margin-top:2px;color:${ok ? 'var(--ok)' : 'var(--gold)'}">${ok ? '🟢 wieder möglich' : `⏳ <span data-until="${n}" data-done="wieder möglich">${fmtClock(n - Date.now())}</span> · ab ${hm(new Date(n))} Uhr`}</div></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><button class="chip on" data-dgo="${d.id}">Gemacht</button>${ok ? '' : `<button class="chip" data-drest="${d.id}">⏱️</button>`}<button class="chip" data-ded="${d.id}">✎</button></div></div>`; }).join('') : '<div class="empty">Noch keine Dungeons eingetragen.</div>'}
+    <div class="btns"><button class="btn pri" id="dg-add">＋ Dungeon</button></div>
+    ${remRow('dungeon')}`});
+  $$('#sub [data-dgo]').forEach(x => x.onclick = () => { const d = T.dungeons.find(y => y.id === x.dataset.dgo); d.done = Date.now(); d.next = d.done + d.cd * 60000; d.runs = (d.runs || 0) + 1; saveT('dungeons'); toast(`🔔 Wieder möglich in ${fmtCd(d.cd)}`); if(NATIVE) askNotify(false); openDungeons(true); });
+  $$('#sub [data-drest]').forEach(x => x.onclick = () => { const d = T.dungeons.find(y => y.id === x.dataset.drest); restSheet(d.name, t => { d.next = t; saveT('dungeons'); openDungeons(true); }); });
+  $$('#sub [data-ded]').forEach(x => x.onclick = () => dungeonSheet(T.dungeons.find(y => y.id === x.dataset.ded)));
+  $('#dg-add').onclick = () => dungeonSheet();
+  wireRem('#sub', () => scheduleReminders());
+}
+function dungeonSheet(d){
+  const isNew = !d; d = d || {id:uid(), name:'', cd:60, done:0};
+  const sugg = LIB.idx ? LIB.idx.seiten.filter(e => /dungeon|turm|höhle|festung|warte|tempel|grotte/i.test(e.t)).map(e => e.t).slice(0, 12) : [];
+  openSheet(`<h2>${isNew ? 'Dungeon hinzufügen' : esc(d.name)}</h2>
+    <label class="f">Name</label><input type="text" id="dg-n" value="${esc(d.name)}" placeholder="z. B. Dämonenturm">
+    ${isNew && sugg.length ? `<div class="chips" style="margin-top:8px">${sugg.map(n => `<button class="chip" data-dn="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : ''}
+    <label class="f">Abklingzeit (wie im Spiel)</label>${durFields('dg-d', d.cd)}
+    <div class="btns"><button class="btn pri" id="dg-s">Speichern</button>${isNew ? '' : '<button class="btn del" id="dg-x">Löschen</button>'}</div>`);
+  $$('#sheet [data-dn]').forEach(b => b.onclick = () => { $('#dg-n').value = b.dataset.dn; });
+  $('#dg-s').onclick = () => { d.name = $('#dg-n').value.trim(); d.cd = readDur('dg-d') || 60; if(!d.name){ toast('Welcher Dungeon?'); return; } if(isNew) T.dungeons.push(d); saveT('dungeons'); closeSheet(); openDungeons(true); };
+  if(!isNew) $('#dg-x').onclick = () => { if(!confirmTwice('#dg-x')) return; T.dungeons = T.dungeons.filter(x => x.id !== d.id); saveT('dungeons'); closeSheet(); openDungeons(true); };
+}
+
+/* ---- Tägliche Belohnungen ---- */
+const dailyDone = r => r.last === todayStr();
+function dailyCard(){
+  const open = T.daily.filter(r => !dailyDone(r));
+  return `<button class="row" data-tool="daily"><div class="ic">🎁</div><div class="mid"><b>Tägliche Belohnungen</b><small>${T.daily.length ? (open.length ? `${open.length} noch abholen: ${open.slice(0, 2).map(r => esc(r.name)).join(', ')}` : 'Alles abgeholt 🎉') : 'Login-Belohnung, Event-Truhen …'}</small></div><div class="rt">›</div></button>`;
+}
+function openDaily(fromHist){
+  if(!fromHist) S.hist.push(f => openDaily(f));
+  subPage({head:'<div style="font-size:26px">🎁</div><h1>Tägliche Belohnungen</h1>', body:`
+    <p class="muted" style="margin:0 0 10px">Jeden Tag zur eingestellten Uhrzeit kommt eine Erinnerung – außer du hast schon abgeholt.</p>
+    ${T.daily.length ? T.daily.map(r => `<div class="li${dailyDone(r) ? ' done' : ''}"><button class="ck" data-dck="${r.id}"><i></i></button><div class="tx">${esc(r.name)}<div class="muted" style="font-size:12px">🔔 ${r.time} Uhr${r.until ? ` · bis ${fmtDate(r.until)}` : ''}</div></div><button class="chip" data-ded="${r.id}">✎</button></div>`).join('') : '<div class="empty">Noch nichts eingetragen.</div>'}
+    <div class="btns"><button class="btn pri" id="dl-add">＋ Belohnung</button></div>`});
+  $$('#sub [data-dck]').forEach(x => x.onclick = () => { const r = T.daily.find(y => y.id === x.dataset.dck); r.last = dailyDone(r) ? '' : todayStr(); saveT('daily'); if(navigator.vibrate) navigator.vibrate(15); openDaily(true); });
+  $$('#sub [data-ded]').forEach(x => x.onclick = () => dailySheet(T.daily.find(y => y.id === x.dataset.ded)));
+  $('#dl-add').onclick = () => dailySheet();
+}
+function dailySheet(r){
+  const isNew = !r; r = r || {id:uid(), name:'', time:'19:00', until:'', last:''};
+  openSheet(`<h2>${isNew ? 'Tägliche Belohnung' : esc(r.name)}</h2>
+    <label class="f">Was abholen?</label><input type="text" id="dl-n" value="${esc(r.name)}" placeholder="z. B. Login-Belohnung">
+    <div class="two"><div><label class="f">Erinnerung um</label><input type="time" id="dl-t" value="${r.time}"></div><div><label class="f">Bis (z. B. Event-Ende)</label><input type="date" id="dl-u" value="${r.until || ''}"></div></div>
+    <div class="btns"><button class="btn pri" id="dl-s">Speichern</button>${isNew ? '' : '<button class="btn del" id="dl-x">Löschen</button>'}</div>`);
+  $('#dl-s').onclick = () => { r.name = $('#dl-n').value.trim(); r.time = $('#dl-t').value || '19:00'; r.until = $('#dl-u').value || ''; if(!r.name){ toast('Bitte einen Namen eingeben'); return; } if(isNew) T.daily.push(r); saveT('daily'); closeSheet(); openDaily(true); if(NATIVE) askNotify(false); };
+  if(!isNew) $('#dl-x').onclick = () => { if(!confirmTwice('#dl-x')) return; T.daily = T.daily.filter(x => x.id !== r.id); saveT('daily'); closeSheet(); openDaily(true); };
+}
+
+/* ---- Quest-Liste (aus der Wiki-Bibliothek) ---- */
+let questF = 'a';
+function questPages(){ return LIB.idx ? LIB.idx.seiten.filter(e => e.q || e.g === 'Quests') : []; }
+function questCard(){
+  const a = Object.values(T.quests).filter(v => v === 'a').length, d = Object.values(T.quests).filter(v => v === 'd').length;
+  return `<button class="row" data-tool="quests"><div class="ic">📜</div><div class="mid"><b>Quests</b><small>${a || d ? `${a} aktiv · ${d} erledigt` : 'Quests merken, mit Wiki-Anleitung'}</small></div><div class="rt">›</div></button>`;
+}
+function openQuests(fromHist){
+  if(!fromHist) S.hist.push(f => openQuests(f));
+  const all = questPages();
+  subPage({head:'<div style="font-size:26px">📜</div><h1>Quests</h1>', body:`
+    ${all.length ? '' : '<div class="hint" style="margin-bottom:10px">📚 <span>Die Quest-Seiten kommen mit dem nächsten Wiki-Update in die Bibliothek. Bis dahin kannst du über die Suche im Wiki-Tab nach Quests suchen.</span></div>'}
+    <div class="seg" id="q-f" style="margin-bottom:10px">${[['a', 'Aktiv'], ['all', 'Alle'], ['d', 'Erledigt']].map(([k, t]) => `<button data-k="${k}" class="${questF === k ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <div class="sbox"><input type="text" id="q-q" placeholder="Quest suchen …"></div><div id="q-res"></div>`});
+  const draw = () => {
+    const q = ($('#q-q').value || '').trim().toLowerCase();
+    let list = questF === 'all' ? all : all.filter(e => T.quests[e.p] === questF);
+    if(questF !== 'all'){ const known = new Set(all.map(e => e.p)); Object.entries(T.quests).forEach(([p, v]) => { if(v === questF && !known.has(p)) list.push({p, t:p.replace(/_/g, ' '), s:'', id:''}); }); }
+    if(q) list = list.filter(e => (e.t + ' ' + (e.s || '')).toLowerCase().includes(q));
+    $('#q-res').innerHTML = list.length ? list.slice(0, 150).map(e => { const st = T.quests[e.p];
+      return `<div class="li${st === 'd' ? ' done' : ''}"><button class="ck" data-qd="${esc(e.p)}"><i></i></button><button class="tx" style="text-align:left" data-ql="${esc(e.p)}">${esc(e.t)}${st === 'a' ? ' <span class="tag cheap">aktiv</span>' : ''}<div class="muted" style="font-size:12px">${esc((e.s || '').slice(0, 70))}</div></button><button class="chip${st === 'a' ? ' on' : ''}" data-qa="${esc(e.p)}">${st === 'a' ? '★' : '☆'}</button></div>`; }).join('')
+      : `<div class="empty">${questF === 'a' ? 'Keine aktiven Quests.<br>Unter „Alle“ mit ☆ als aktiv markieren.' : questF === 'd' ? 'Noch nichts erledigt.' : 'Nichts gefunden.'}</div>`;
+    $$('#q-res [data-qd]').forEach(b => b.onclick = () => { const p = b.dataset.qd; T.quests[p] = T.quests[p] === 'd' ? 'a' : 'd'; saveT('quests'); draw(); });
+    $$('#q-res [data-qa]').forEach(b => b.onclick = () => { const p = b.dataset.qa; if(T.quests[p] === 'a') delete T.quests[p]; else T.quests[p] = 'a'; saveT('quests'); draw(); });
+    $$('#q-res [data-ql]').forEach(b => b.onclick = () => openLib(b.dataset.ql));
+  };
+  $$('#q-f button').forEach(b => b.onclick = () => { questF = b.dataset.k; $$('#q-f button').forEach(x => x.classList.toggle('on', x === b)); draw(); });
+  $('#q-q').oninput = draw;
+  draw();
+}
+
+/* ---- Kräuter-Vorrat (Kräuterkunde: Biologe & Trankbrauen) ---- */
+function herbCard(){
+  const n = T.herbs.reduce((s, h) => s + (h.qty || 0), 0);
+  return `<button class="row" data-tool="herbs"><div class="ic">🌿</div><div class="mid"><b>Kräuter</b><small>${T.herbs.length ? `${n} Kräuter in ${T.herbs.length} Sorten` : 'Vorrat fürs Trankbrauen & den Biologen'}</small></div><div class="rt">›</div></button>`;
+}
+function openHerbs(fromHist){
+  if(!fromHist) S.hist.push(f => openHerbs(f));
+  const kp = libPage('Kräuterkunde');
+  subPage({head:'<div style="font-size:26px">🌿</div><h1>Kräuter</h1>', body:`
+    <p class="muted" style="margin:0 0 10px">Dein Vorrat an Kräutern. „Forschung“-Kräuter gehen an den Biologen, „Trankherstellung“-Kräuter zum Brauen bei Baek-Go oder Yu-Hwan.</p>
+    ${T.herbs.length ? T.herbs.map(h => `<div class="row" style="cursor:default"><div class="ic">${h.kind === 'f' ? '🔬' : '⚗️'}</div><div class="mid"><b>${esc(h.name)}</b><small>${h.kind === 'f' ? 'Forschung (Biologe)' : 'Trankherstellung'}${h.goal ? ` · Ziel ${h.goal}` : ''}</small>${h.goal ? `<div class="bar2"><i style="width:${Math.min(100, Math.round(h.qty / h.goal * 100))}%"></i></div>` : ''}</div>
+      <div style="display:flex;align-items:center;gap:6px"><button class="chip" data-hm="${h.id}">−</button><b style="min-width:30px;text-align:center">${h.qty}</b><button class="chip on" data-hp="${h.id}">＋</button></div></div>`).join('') : '<div class="empty">Noch keine Kräuter eingetragen.</div>'}
+    <div class="btns"><button class="btn pri" id="hb-add">＋ Kraut</button>${kp ? '<button class="btn" id="hb-wiki">📖 Kräuterkunde im Wiki</button>' : ''}</div>
+    ${T.herbs.length ? '<p class="muted" style="font-size:12px;margin-top:8px">Lange auf ein Kraut tippen zum Bearbeiten.</p>' : ''}`});
+  const mod = (id, n) => { const h = T.herbs.find(x => x.id === id); h.qty = Math.max(0, (h.qty || 0) + n); saveT('herbs'); if(navigator.vibrate) navigator.vibrate(10); openHerbs(true); };
+  $$('#sub [data-hp]').forEach(b => b.onclick = () => mod(b.dataset.hp, 1));
+  $$('#sub [data-hm]').forEach(b => b.onclick = () => mod(b.dataset.hm, -1));
+  $$('#sub .row .mid').forEach((m, i) => { let t; m.onpointerdown = () => { t = setTimeout(() => herbSheet(T.herbs[i]), 550); }; m.onpointerup = m.onpointerleave = () => clearTimeout(t); m.onclick = () => herbSheet(T.herbs[i]); });
+  $('#hb-add').onclick = () => herbSheet();
+  if($('#hb-wiki')) $('#hb-wiki').onclick = () => openLib(kp.p);
+}
+function herbSheet(h){
+  const isNew = !h; h = h || {id:uid(), name:'', kind:'t', qty:0, goal:0};
+  openSheet(`<h2>${isNew ? 'Kraut hinzufügen' : esc(h.name)}</h2>
+    <label class="f">Name</label><input type="text" id="hb-n" value="${esc(h.name)}" placeholder="z. B. Glockenblume" autocomplete="off">
+    <div class="seg" id="hb-k" style="margin-top:10px">${[['t', '⚗️ Trankherstellung'], ['f', '🔬 Forschung']].map(([k, t]) => `<button data-k="${k}" class="${h.kind === k ? 'on' : ''}">${t}</button>`).join('')}</div>
+    <div class="two"><div><label class="f">Menge</label><input type="text" inputmode="numeric" id="hb-q" value="${h.qty}"></div><div><label class="f">Ziel (optional)</label><input type="text" inputmode="numeric" id="hb-g" value="${h.goal || ''}"></div></div>
+    <div class="btns"><button class="btn pri" id="hb-s">Speichern</button>${isNew ? '' : '<button class="btn del" id="hb-x">Löschen</button>'}</div>`);
+  suggest($('#hb-n'), 'item');
+  $$('#hb-k button').forEach(b => b.onclick = () => { h.kind = b.dataset.k; $$('#hb-k button').forEach(x => x.classList.toggle('on', x === b)); });
+  $('#hb-s').onclick = () => { h.name = $('#hb-n').value.trim(); h.qty = Math.max(0, parseInt($('#hb-q').value, 10) || 0); h.goal = Math.max(0, parseInt($('#hb-g').value, 10) || 0); if(!h.name){ toast('Welches Kraut?'); return; } if(isNew) T.herbs.push(h); saveT('herbs'); closeSheet(); openHerbs(true); };
+  if(!isNew) $('#hb-x').onclick = () => { if(!confirmTwice('#hb-x')) return; T.herbs = T.herbs.filter(x => x.id !== h.id); saveT('herbs'); closeSheet(); openHerbs(true); };
+}
+
+/* ---- Talismane & Drachensteine ---- */
+const GEAR_KINDS = {talisman:['🔮', 'Talisman', 'Talismane'], stone:['💎', 'Drachenstein', 'Drachensteinalchemie'], other:['🛡️', 'Ausrüstung', '']};
+function gearCard(){
+  const t = T.gear.filter(g => g.kind === 'talisman').length, s = T.gear.filter(g => g.kind === 'stone').length;
+  return `<button class="row" data-tool="gear"><div class="ic">🔮</div><div class="mid"><b>Talismane & Drachensteine</b><small>${T.gear.length ? `${t} Talisman${t === 1 ? '' : 'e'} · ${s} Drachenstein${s === 1 ? '' : 'e'}${T.gear.filter(g => g.goal).length ? ` · ${T.gear.filter(g => g.goal).length} Ziele` : ''}` : 'Stufen, Boni & nächste Schritte'}</small></div><div class="rt">›</div></button>`;
+}
+function openGear(fromHist){
+  if(!fromHist) S.hist.push(f => openGear(f));
+  const groups = Object.keys(GEAR_KINDS).map(k => [k, T.gear.filter(g => g.kind === k)]).filter(([, l]) => l.length);
+  subPage({head:'<div style="font-size:26px">🔮</div><h1>Talismane & Drachensteine</h1>', body:`
+    ${groups.length ? groups.map(([k, l]) => `<h3>${GEAR_KINDS[k][0]} ${GEAR_KINDS[k][1]}${l.length > 1 ? (k === 'talisman' ? 'e' : k === 'stone' ? 'e' : '') : ''}</h3>` + l.map(g => `<button class="row" data-gear="${g.id}"><div class="ic">${GEAR_KINDS[g.kind][0]}</div><div class="mid"><b>${esc(g.name)}${g.lvl ? ` <span class="tag lv">${esc(g.lvl)}</span>` : ''}</b><small>${esc(g.bonus || '')}</small>${g.goal ? `<div style="font-size:12px;margin-top:2px;color:var(--gold)">🎯 ${esc(g.goal)}</div>` : ''}</div><div class="rt">›</div></button>`).join('')).join('') : '<div class="empty">Noch nichts eingetragen.</div>'}
+    <div class="tiles" style="grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px">${Object.entries(GEAR_KINDS).map(([k, [ic, t]]) => `<button class="tile" data-gadd="${k}" style="padding:10px 4px;align-items:center;min-height:0"><div style="font-size:22px">${ic}</div><div class="ts" style="text-align:center">＋ ${t}</div></button>`).join('')}</div>
+    <div class="btns">${libPage('Talismane') ? '<button class="btn" data-lib="Talismane">📖 Talismane</button>' : ''}${libPage('Drachensteinalchemie') ? '<button class="btn" data-lib="Drachensteinalchemie">📖 Drachensteinalchemie</button>' : ''}</div>`});
+  $$('#sub [data-gear]').forEach(x => x.onclick = () => gearSheet(T.gear.find(g => g.id === x.dataset.gear)));
+  $$('#sub [data-gadd]').forEach(x => x.onclick = () => gearSheet(null, x.dataset.gadd));
+  $$('#sub [data-lib]').forEach(b => b.onclick = () => openLib(b.dataset.lib));
+}
+function gearSheet(g, kind){
+  const isNew = !g; g = g || {id:uid(), kind:kind || 'talisman', name:'', lvl:'', bonus:'', goal:'', note:''};
+  const ph = {talisman:['z. B. Blitztalisman', 'z. B. +120'], stone:['z. B. Rubin (Drachenstein)', 'z. B. Edel / Klarheit Makellos'], other:['z. B. Waffe', 'z. B. +9']};
+  const wiki = libPage(g.name) || (GEAR_KINDS[g.kind][2] && libPage(GEAR_KINDS[g.kind][2]));
+  openSheet(`<h2>${isNew ? GEAR_KINDS[g.kind][0] + ' ' + GEAR_KINDS[g.kind][1] : esc(g.name)}</h2>
+    <div class="seg" id="gr-k">${Object.entries(GEAR_KINDS).map(([k, [ic, t]]) => `<button data-k="${k}" class="${g.kind === k ? 'on' : ''}">${ic} ${t}</button>`).join('')}</div>
+    <div class="two"><div><label class="f">Name</label><input type="text" id="gr-n" value="${esc(g.name)}" placeholder="${ph[g.kind][0]}" autocomplete="off"></div><div style="flex:0 0 120px"><label class="f">Stufe</label><input type="text" id="gr-l" value="${esc(g.lvl)}" placeholder="${ph[g.kind][1]}"></div></div>
+    <label class="f">Boni</label><textarea id="gr-b" placeholder="z. B. Stark gegen Monster 10 %, Max. TP +2000">${esc(g.bonus)}</textarea>
+    <label class="f">🎯 Nächstes Ziel</label><input type="text" id="gr-g" value="${esc(g.goal)}" placeholder="z. B. +140 – fehlen noch 3 Blitz-Glanzfragmente">
+    <div class="btns"><button class="btn pri" id="gr-s">Speichern</button>${wiki ? `<button class="btn" id="gr-w">📖 ${esc(wiki.t)}</button>` : ''}${isNew ? '' : '<button class="btn del" id="gr-x">Löschen</button>'}</div>`);
+  suggest($('#gr-n'), 'item');
+  $$('#gr-k button').forEach(b => b.onclick = () => { g.kind = b.dataset.k; $$('#gr-k button').forEach(x => x.classList.toggle('on', x === b)); $('#gr-n').placeholder = ph[g.kind][0]; $('#gr-l').placeholder = ph[g.kind][1]; });
+  $('#gr-s').onclick = () => { g.name = $('#gr-n').value.trim(); g.lvl = $('#gr-l').value.trim(); g.bonus = $('#gr-b').value.trim(); g.goal = $('#gr-g').value.trim(); if(!g.name){ toast('Bitte einen Namen eingeben'); return; } if(isNew) T.gear.push(g); saveT('gear'); closeSheet(); openGear(true); };
+  if(wiki) $('#gr-w').onclick = () => { closeSheet(); openLib(wiki.p); };
+  if(!isNew) $('#gr-x').onclick = () => { if(!confirmTwice('#gr-x')) return; T.gear = T.gear.filter(x => x.id !== g.id); saveT('gear'); closeSheet(); openGear(true); };
+}
+
+/* ---- Erinnerungen der neuen Werkzeuge ---- */
+function toolReminders2(now){
+  const L = [];
+  const add = (key, at, title, body) => { if(at > now + 5000 && at < now + 14 * 864e5) L.push({id:hashId(key), title, body, schedule:{at:new Date(at), allowWhileIdle:true}, extra:{tool:2}}); };
+  T.buffs.forEach(b => { if(!buffRun(b)) return; const d = b.min * 60000;
+    if(b.rep){ for(let t = b.start + d; t <= b.start + 4 * 3600e3; t += d) add('buff' + b.id + b.start + t, t - b.lead * 60000, `${b.icon} ${b.name} ${b.lead ? 'läuft in ' + b.lead + ' Min ab' : 'ist abgelaufen'}`, 'Jetzt nachwerfen'); }
+    else add('buff' + b.id + b.start, buffEnd(b) - b.lead * 60000, `${b.icon} ${b.name} ${b.lead ? 'läuft in ' + b.lead + ' Min ab' : 'ist abgelaufen'}`, 'Jetzt nachwerfen'); });
+  const rd = remCfg('dungeon');
+  if(rd.on) T.dungeons.forEach(d => { const n = dgNext(d); if(n > now) add('dg' + d.id + n, n - rd.lead * 60000, `🏰 ${d.name} ${rd.lead ? 'in ' + rd.lead + ' Min wieder möglich' : 'ist wieder möglich'}`, 'Die Abklingzeit ist vorbei'); });
+  T.daily.forEach(r => { for(let i = 0; i < 7; i++){ const ds = addDays(todayStr(), i); if(r.until && ds > r.until) break; if(i === 0 && dailyDone(r)) continue; add('daily' + r.id + ds, atTime(ds, r.time), `🎁 ${r.name}`, 'Heute schon abgeholt? Sonst jetzt abholen'); } });
+  return L;
+}
+
 /* ================= Sync über den eigenen Server (PocketBase, wie bei TCG Multiversum) ================= */
 const srvUrl = () => String(S.cfg.srvUrl || '').trim().replace(/\/+$/, '');
 const srvOn = () => !!(srvUrl() && S.cfg.srvToken);
@@ -1804,7 +2137,7 @@ function srvLogout(){ Object.assign(S.cfg, {srvToken:'', srvUser:'', srvNick:'',
 // Alles, was abgeglichen wird
 function syncPayload(){
   return {ts:Date.now(), dev:navigator.userAgent.slice(0, 60), events:S.events, drops:S.drops, sessions:S.sessions, prices:S.prices, active:S.active,
-    tools:{check:T.check, bio:T.bio, bosses:T.bosses, pets:T.pets, skills:T.skills, moon:T.moon}, mapNotes:S.mapNotes || store('m2_mapnotes') || {},
+    tools:{check:T.check, bio:T.bio, bosses:T.bosses, pets:T.pets, skills:T.skills, moon:T.moon, buffs:T.buffs, dungeons:T.dungeons, daily:T.daily, quests:T.quests, herbs:T.herbs, gear:T.gear}, mapNotes:S.mapNotes || store('m2_mapnotes') || {},
     cfg:{char:S.cfg.char, cls:S.cfg.cls, lvl:S.cfg.lvl, server:S.cfg.server, offFav:S.cfg.offFav, offNotify:S.cfg.offNotify, remind:S.cfg.remind}};
 }
 function applyPayload(p, merge){
@@ -1815,11 +2148,12 @@ function applyPayload(p, merge){
   if(!merge || !S.active) S.active = p.active || null;
   const t = p.tools || {};
   ['check', 'bio', 'moon'].forEach(k => { if(t[k]) T[k] = t[k]; });
-  ['bosses', 'pets', 'skills'].forEach(k => { T[k] = byId(T[k], t[k]); });
+  if(t.quests) T.quests = merge ? Object.assign({}, t.quests, T.quests) : t.quests;
+  ['bosses', 'pets', 'skills', 'buffs', 'dungeons', 'daily', 'herbs', 'gear'].forEach(k => { if(t[k] || !merge) T[k] = byId(T[k], t[k] || []); });
   if(p.mapNotes){ S.mapNotes = merge ? Object.assign({}, p.mapNotes, S.mapNotes || {}) : p.mapNotes; store('m2_mapnotes', S.mapNotes); }
   if(p.cfg) Object.assign(S.cfg, p.cfg);
   store('m2_events', S.events); store('m2_drops', S.drops); store('m2_sessions', S.sessions); store('m2_active', S.active); store('m2_prices', S.prices); store('m2_cfg', S.cfg);
-  ['check', 'bio', 'bosses', 'pets', 'skills', 'moon'].forEach(k => store('m2_' + k, T[k]));
+  ['check', 'bio', 'bosses', 'pets', 'skills', 'moon', 'buffs', 'dungeons', 'daily', 'quests', 'herbs', 'gear'].forEach(k => store('m2_' + k, T[k]));
   scheduleReminders(); renderAll();
 }
 let _syncT = null, _syncing = false;
